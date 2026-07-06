@@ -21,9 +21,3 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
-
-# Design artifacts (original bundle, not needed for deployment)
-project_ui/
-
-# Old Next.js app (superseded by client/)
-mcan-app/
