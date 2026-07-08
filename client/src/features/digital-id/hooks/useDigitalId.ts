@@ -13,7 +13,7 @@ function useDigitalId(userId?: string) {
     enabled: !!userId,
   })
 
-  const requestMutation = useMutation<DigitalIdRequest, Error, Omit<DigitalIdRequest, 'id' | 'status' | 'createdAt'>>({
+  const requestMutation = useMutation<DigitalIdRequest, Error, Omit<DigitalIdRequest, 'id' | 'status' | 'createdAt'> & { userId?: string; holderSignature?: string }>({
     mutationFn: (data) => digitalIdApi.requestDigitalId(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: DIGITAL_ID_KEY }),
   })

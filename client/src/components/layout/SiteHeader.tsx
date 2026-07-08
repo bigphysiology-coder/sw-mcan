@@ -1,5 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { newsApi } from '@/features/news/services/newsApi';
+import { eventsApi } from '@/features/events/services/eventsApi';
+
+interface SearchItem {
+  label: string;
+  href: string;
+  category: string;
+  description: string;
+}
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -14,6 +23,7 @@ const moreItems = [
   { label: 'Leadership', href: '/leadership' },
   { label: 'Gallery', href: '/gallery' },
   { label: 'News', href: '/news' },
+  { label: 'Events', href: '/events' },
   { label: 'MCAN Southwest ID', href: '/digital-id' },
   { label: 'FAQ', href: '/faq' },
   { label: 'Contact us', href: '/contact' },
@@ -22,6 +32,22 @@ const moreItems = [
 
 const allLinks = [...navItems, ...moreItems];
 
+const pageSearchItems: SearchItem[] = [
+  { label: 'Home', href: '/', category: 'Page', description: 'Welcome to MCAN Southwest' },
+  { label: 'About', href: '/about', category: 'Page', description: 'Learn about the zone and mission' },
+  { label: 'Programs', href: '/programs', category: 'Page', description: 'View programs, lectures and outreach' },
+  { label: 'Lodges', href: '/lodges', category: 'Page', description: 'Find lodge locations and updates' },
+  { label: 'Projects', href: '/projects', category: 'Page', description: 'See ongoing and completed projects' },
+  { label: 'Donate', href: '/donate', category: 'Page', description: 'Support welfare and outreach work' },
+  { label: 'Leadership', href: '/leadership', category: 'Page', description: 'Meet the executive team' },
+  { label: 'Gallery', href: '/gallery', category: 'Page', description: 'Browse photos from events and programs' },
+  { label: 'News', href: '/news', category: 'Page', description: 'Latest announcements and stories' },
+  { label: 'Events', href: '/events', category: 'Page', description: 'Upcoming seminars and activities' },
+  { label: 'Contact', href: '/contact', category: 'Page', description: 'Get in touch with the secretariat' },
+  { label: 'Membership', href: '/membership', category: 'Page', description: 'Join MCAN Southwest' },
+  { label: 'Digital ID', href: '/digital-id', category: 'Page', description: 'Request your MCAN identity card' },
+];
+
 export function SiteHeader() {
   const { pathname } = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -29,18 +55,42 @@ export function SiteHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [recentContent, setRecentContent] = useState<SearchItem[]>([]);
   const moreRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  const searchItems = [...pageSearchItems, ...recentContent];
+  const filteredSearchResults = searchQuery.trim()
+    ? searchItems.filter((item) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          item.label.toLowerCase().includes(query) ||
+          item.description.toLowerCase().includes(query) ||
+          item.category.toLowerCase().includes(query)
+        );
+      })
+    : [];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate('/programs?q=' + encodeURIComponent(searchQuery.trim()));
-      setSearchQuery('');
-      setMobileOpen(false);
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    const firstMatch = filteredSearchResults[0];
+    if (firstMatch) {
+      navigate(firstMatch.href);
+    } else {
+      navigate('/news');
     }
+
+    setSearchQuery('');
+    setSearchOpen(false);
+    setMobileOpen(false);
   };
 
   useEffect(() => {
@@ -52,6 +102,8 @@ export function SiteHeader() {
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) setNotificationsOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
@@ -84,6 +136,38 @@ export function SiteHeader() {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadRecentContent() {
+      try {
+        const [newsData, eventData] = await Promise.all([newsApi.getNews(), eventsApi.getEvents()]);
+        if (!active) return;
+
+        const items: SearchItem[] = [
+          ...newsData.slice(0, 3).map((item) => ({
+            label: item.title,
+            href: `/news/${item.slug}`,
+            category: 'News',
+            description: item.excerpt,
+          })),
+          ...eventData.slice(0, 3).map((item) => ({
+            label: item.title,
+            href: '/events',
+            category: 'Event',
+            description: item.description,
+          })),
+        ];
+
+        setRecentContent(items);
+      } catch {
+        setRecentContent([]);
+      }
+    }
+
+    loadRecentContent();
+    return () => { active = false; };
+  }, []);
 
   const linkStyle = (href: string) => ({
     fontFamily: 'var(--font-body)' as const, fontSize: '14.5px', background: 'none', border: 'none', cursor: 'pointer',
@@ -180,27 +264,89 @@ export function SiteHeader() {
         </nav>
 
         <div style={{ display: isMobile ? 'none' : 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <form onSubmit={handleSearch} style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            border: '1px solid var(--border-default)', borderRadius: '999px',
-            background: 'var(--gray-50)', padding: '0 6px 0 12px',
-            width: searchOpen ? '210px' : '38px', height: '38px',
-            transition: 'width var(--dur-base) var(--ease-standard)', overflow: 'hidden',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, cursor: 'pointer' }} onClick={() => setSearchOpen((o) => !o)}>
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input placeholder="Search the site" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{
-              border: 'none', outline: 'none', background: 'transparent', flex: 1, minWidth: 0,
-              fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text-heading)',
-              opacity: searchOpen ? 1 : 0, transition: 'opacity var(--dur-fast) var(--ease-standard)',
-            }} />
-          </form>
+          <div ref={searchRef} style={{ position: 'relative' }}>
+            <form onSubmit={handleSearch} style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              border: '1px solid var(--border-default)', borderRadius: '999px',
+              background: 'var(--gray-50)', padding: '0 6px 0 12px',
+              width: searchOpen ? '240px' : '38px', height: '38px',
+              transition: 'width var(--dur-base) var(--ease-standard)', overflow: 'hidden',
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, cursor: 'pointer' }} onClick={() => setSearchOpen((o) => !o)}>
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                placeholder="Search the site"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value.trim()) setSearchOpen(true);
+                }}
+                onFocus={() => setSearchOpen(true)}
+                style={{
+                  border: 'none', outline: 'none', background: 'transparent', flex: 1, minWidth: 0,
+                  fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text-heading)',
+                  opacity: searchOpen ? 1 : 0, transition: 'opacity var(--dur-fast) var(--ease-standard)',
+                }}
+              />
+            </form>
 
-          <button style={iconBtn} title="Updates" aria-label="Updates">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-            <span style={{ position: 'absolute', top: '7px', right: '8px', width: '8px', height: '8px', borderRadius: '999px', background: 'var(--gold)', border: '2px solid var(--white)' }} />
-          </button>
+            {searchOpen && searchQuery.trim() && filteredSearchResults.length > 0 && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '280px', background: 'var(--white)',
+                borderRadius: 'var(--radius-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-lg)', zIndex: 120,
+              }}>
+                {filteredSearchResults.slice(0, 6).map((item) => (
+                  <Link
+                    key={`${item.href}-${item.label}`}
+                    to={item.href}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchOpen(false);
+                    }}
+                    style={{
+                      display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', textDecoration: 'none',
+                      color: 'var(--text-body)', background: 'var(--white)',
+                    }}
+                  >
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-heading)' }}>{item.label}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{item.description}</div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div ref={notificationRef} style={{ position: 'relative' }}>
+            <button onClick={() => setNotificationsOpen((o) => !o)} style={iconBtn} title="Updates" aria-label="Updates">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+              <span style={{ position: 'absolute', top: '7px', right: '8px', width: '8px', height: '8px', borderRadius: '999px', background: 'var(--gold)', border: '2px solid var(--white)' }} />
+            </button>
+
+            {notificationsOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '280px', background: 'var(--white)',
+                borderRadius: 'var(--radius-card)', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow-lg)', zIndex: 120,
+              }}>
+                <div style={{ padding: '12px 12px 8px', fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                  Recent updates
+                </div>
+                {recentContent.length > 0 ? recentContent.map((item) => (
+                  <Link
+                    key={`${item.href}-${item.label}`}
+                    to={item.href}
+                    onClick={() => setNotificationsOpen(false)}
+                    style={{ display: 'block', padding: '10px 12px', borderTop: '1px solid var(--border-subtle)', textDecoration: 'none', color: 'var(--text-body)' }}
+                  >
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-heading)' }}>{item.label}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{item.category}</div>
+                  </Link>
+                )) : (
+                  <div style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-muted)' }}>No updates yet.</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {isMobile && (

@@ -66,6 +66,8 @@ function IdCardRequest({ onSuccess }: IdCardRequestProps) {
       validityEnd: `${validityEndMonth}, ${validityEndYear}`,
       phone: phone.trim(),
       photo: photoPreview ?? '',
+      userId: '',
+      holderSignature: '',
     })
     onSuccess?.()
   }

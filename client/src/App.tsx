@@ -11,7 +11,9 @@ const HomePage = lazy(() => import('@/pages/public/HomePage'))
 const AboutPage = lazy(() => import('@/pages/public/AboutPage'))
 const ContactPage = lazy(() => import('@/pages/public/ContactPage'))
 const NewsPage = lazy(() => import('@/pages/public/NewsPage'))
+const NewsDetailPage = lazy(() => import('@/pages/public/NewsDetailPage'))
 const EventsPage = lazy(() => import('@/pages/public/EventsPage'))
+const EventDetailPage = lazy(() => import('@/pages/public/EventDetailPage'))
 const MembershipPage = lazy(() => import('@/pages/public/MembershipPage'))
 const DigitalIdPage = lazy(() => import('@/pages/public/DigitalIdPage'))
 const ProgramsPage = lazy(() => import('@/pages/public/ProgramsPage'))
@@ -56,7 +58,9 @@ function Layout() {
             <Route path="/about" element={<Suspense fallback={fallback}><AboutPage /></Suspense>} />
             <Route path="/contact" element={<Suspense fallback={fallback}><ContactPage /></Suspense>} />
             <Route path="/news" element={<Suspense fallback={fallback}><NewsPage /></Suspense>} />
+            <Route path="/news/:slug" element={<Suspense fallback={fallback}><NewsDetailPage /></Suspense>} />
             <Route path="/events" element={<Suspense fallback={fallback}><EventsPage /></Suspense>} />
+            <Route path="/events/:id" element={<Suspense fallback={fallback}><EventDetailPage /></Suspense>} />
             <Route path="/membership" element={<Suspense fallback={fallback}><MembershipPage /></Suspense>} />
             <Route path="/programs" element={<Suspense fallback={fallback}><ProgramsPage /></Suspense>} />
             <Route path="/projects" element={<Suspense fallback={fallback}><ProjectsPage /></Suspense>} />

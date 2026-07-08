@@ -30,9 +30,10 @@ interface ProgramsViewProps {
   about?: boolean;
   news?: boolean;
   projects?: boolean;
+  allowJoinModal?: boolean;
 }
 
-export function ProgramsView({ about, news, projects }: ProgramsViewProps) {
+export function ProgramsView({ about, news, projects, allowJoinModal = !news && !projects && !about }: ProgramsViewProps) {
   const [filter, setFilter] = useState('All');
   const [joinOpen, setJoinOpen] = useState(false);
   const [searchParams] = useSearchParams();
@@ -84,15 +85,17 @@ export function ProgramsView({ about, news, projects }: ProgramsViewProps) {
         <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
           {list.map((it, i) => (
             <Reveal key={it.title} delay={(i % 3) * 0.09}>
-              <ProgramCard {...it} onClick={() => setJoinOpen(true)} />
+              <ProgramCard {...it} onClick={allowJoinModal ? () => setJoinOpen(true) : undefined} />
             </Reveal>
           ))}
         </div>
-        <div style={{ marginTop: '48px', display: 'flex', justifyContent: 'center' }}>
-          <Button variant="secondary" size="lg" onClick={() => setJoinOpen(true)}>Register your interest</Button>
-        </div>
+          {allowJoinModal && (
+            <div style={{ marginTop: '48px', display: 'flex', justifyContent: 'center' }}>
+              <Button variant="secondary" size="lg" onClick={() => setJoinOpen(true)}>Register your interest</Button>
+            </div>
+          )}
       </section>
-      {joinOpen && <JoinModal onClose={() => setJoinOpen(false)} />}
+        {allowJoinModal && joinOpen && <JoinModal onClose={() => setJoinOpen(false)} />}
     </div>
   );
 }

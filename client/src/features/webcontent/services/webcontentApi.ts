@@ -10,6 +10,7 @@ function seed() {
     sections: [
       { label: 'Hero', visible: true },
       { label: 'Programs preview', visible: true },
+      { label: 'Events', visible: true },
       { label: 'State chapters', visible: true },
       { label: 'Donate', visible: true },
       { label: 'Lodges directory', visible: true },

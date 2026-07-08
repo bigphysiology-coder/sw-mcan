@@ -17,6 +17,11 @@ function useExecutives() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
   })
 
+  const updateMutation = useMutation<Executive, Error, { id: string; data: Partial<Executive> }>({
+    mutationFn: ({ id, data }) => executivesApi.updateExecutive(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+  })
+
   const deleteMutation = useMutation<void, Error, string>({
     mutationFn: (id) => executivesApi.deleteExecutive(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
@@ -27,8 +32,10 @@ function useExecutives() {
     isLoading,
     error,
     createExecutive: createMutation.mutateAsync,
+    updateExecutive: updateMutation.mutateAsync,
     deleteExecutive: deleteMutation.mutateAsync,
     isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
   }
 }

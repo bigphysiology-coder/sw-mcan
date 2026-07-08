@@ -6,23 +6,35 @@ const delay = () => new Promise<void>((r) => setTimeout(r, 600))
 function seed() {
   if (localStorage.getItem(EXEC_KEY)) return
   const execs: Executive[] = [
-    { id: 'ex1', name: 'Abdulmalik Mahmud', role: 'President (Ameer)', state: 'MCAN', photo: '/photos/exec-abdulmalik.jpg' },
-    { id: 'ex2', name: 'Ahmad Deedat Zakari, Esq.', role: 'Secretary General', state: 'MCAN', photo: '/photos/exec-ahmad.jpg' },
-    { id: 'ex3', name: 'Aminah O. Abdurrahman', role: 'Ameerah (Sisters’ Affairs)', state: 'MCAN', photo: '/photos/exec-aminah.jpg' },
-    { id: 'ex4', name: 'Abdulkudus Shehu Ghazali', role: "Da'wah Chairman", state: 'MCAN', photo: '/photos/exec-abdulkudus.jpg' },
-    { id: 'ex5', name: 'Fadlullah O. Shittu', role: 'Business & Assets Officer', state: 'MCAN', photo: '/photos/exec-fadlullah.jpg' },
-    { id: 'ex6', name: 'Hadi-Almu Umar Faruk', role: 'Public Relations Officer', state: 'MCAN', photo: '/photos/exec-hadi.jpg' },
-    { id: 'ex7', name: 'Sameer A. Babayo', role: 'Director of Welfare', state: 'MCAN', photo: '/photos/exec-sameer.jpg' },
-    { id: 'ex8', name: 'Sodiq Balogun Olabamiji', role: 'Financial Secretary', state: 'MCAN', photo: '/photos/exec-sodiq.jpg' },
+    { id: 'ex1', name: 'Abdulmalik Mahmud', role: 'President (Ameer)', state: 'MCAN SOUTH WEST', photo: '/photos/exec-abdulmalik.jpg' },
+    { id: 'ex2', name: 'Ahmad Deedat Zakari, Esq.', role: 'Secretary General', state: 'MCAN SOUTH WEST', photo: '/photos/exec-ahmad.jpg' },
+    { id: 'ex3', name: 'Aminah O. Abdurrahman', role: 'Ameerah (Sisters’ Affairs)', state: 'MCAN SOUTH WEST', photo: '/photos/exec-aminah.jpg' },
+    { id: 'ex4', name: 'Abdulkudus Shehu Ghazali', role: "Da'wah Chairman", state: 'MCAN SOUTH WEST', photo: '/photos/exec-abdulkudus.jpg' },
+    { id: 'ex5', name: 'Fadlullah O. Shittu', role: 'Business & Assets Officer', state: 'MCAN SOUTH WEST', photo: '/photos/exec-fadlullah.jpg' },
+    { id: 'ex6', name: 'Hadi-Almu Umar Faruk', role: 'Public Relations Officer', state: 'MCAN SOUTH WEST', photo: '/photos/exec-hadi.jpg' },
+    { id: 'ex7', name: 'Sameer A. Babayo', role: 'Director of Welfare', state: 'MCAN SOUTH WEST', photo: '/photos/exec-sameer.jpg' },
+    { id: 'ex8', name: 'Sodiq Balogun Olabamiji', role: 'Financial Secretary', state: 'MCAN SOUTH WEST', photo: '/photos/exec-sodiq.jpg' },
   ]
   localStorage.setItem(EXEC_KEY, JSON.stringify(execs))
+}
+
+function normalizeState(state?: string): string {
+  return state === 'MCAN' ? 'MCAN SOUTH WEST' : state || 'MCAN SOUTH WEST'
 }
 
 seed()
 
 function getStored(): Executive[] {
   try {
-    return JSON.parse(localStorage.getItem(EXEC_KEY) || '[]') as Executive[]
+    const stored = JSON.parse(localStorage.getItem(EXEC_KEY) || '[]') as Executive[]
+    const normalized = stored.map((item) => ({
+      ...item,
+      state: normalizeState(item.state),
+    }))
+    if (stored.some((item, index) => item.state !== normalized[index].state)) {
+      save(normalized)
+    }
+    return normalized
   } catch {
     return []
   }

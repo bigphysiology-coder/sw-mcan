@@ -1,5 +1,5 @@
 import { ProgramsView } from '@/features/programs/ProgramsView'
 
 export default function Projects() {
-  return <ProgramsView projects />
+  return <ProgramsView projects allowJoinModal={false} />
 }

@@ -3,9 +3,15 @@ import { useWebContent } from '@/features/webcontent/hooks/useWebContent'
 export default function AdminWebContentPage() {
   const { content, isLoading, updateContent, isUpdating } = useWebContent()
 
-  if (isLoading || !content) {
+  if (isLoading) {
     return <div style={{ padding: '40px', textAlign: 'center', color: '#9CA3AF' }}>Loading web content…</div>
   }
+
+  if (!content) {
+    return <div style={{ padding: '40px', textAlign: 'center', color: '#9CA3AF' }}>No web content available yet.</div>
+  }
+
+  const currentContent = content
 
   async function saveHeadline() {
     const el = document.getElementById('hero-headline') as HTMLTextAreaElement | null
@@ -13,7 +19,8 @@ export default function AdminWebContentPage() {
   }
 
   async function toggleSection(index: number) {
-    const updated = content.sections.map((s, i) =>
+    const sections = currentContent.sections ?? []
+    const updated = sections.map((s, i) =>
       i === index ? { ...s, visible: !s.visible } : s
     )
     await updateContent({ sections: updated })

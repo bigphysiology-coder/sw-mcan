@@ -34,6 +34,7 @@ export interface RegisterPayload {
 export interface Member extends User {
   status: 'pending' | 'active' | 'inactive' | 'completed' | 'rejected'
   digitalIdStatus: 'not_requested' | 'pending' | 'approved' | 'rejected'
+  reason?: string
 }
 
 export interface NewsItem {

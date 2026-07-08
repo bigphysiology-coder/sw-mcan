@@ -4,7 +4,7 @@ export default function AdminLodgesPage() {
   const { lodges, isLoading, updateLodge, isUpdating } = useLodges()
 
   async function handleStatusChange(id: string, status: string) {
-    await updateLodge(id, { status: status as 'Available' | 'Limited' | 'Full' })
+    await updateLodge({ id, data: { status: status as 'Available' | 'Limited' | 'Full' } })
   }
 
   if (isLoading) return <div style={{ padding: '40px', textAlign: 'center', color: '#9CA3AF' }}>Loading lodges…</div>

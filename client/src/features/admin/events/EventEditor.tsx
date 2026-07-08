@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import type { EventItem } from '@/types'
@@ -19,7 +19,33 @@ function EventEditor({ existingEvent, onSave, onCancel }: EventEditorProps) {
   const [location, setLocation] = useState(existingEvent?.location ?? '')
   const [type, setType] = useState<EventItem['type']>(existingEvent?.type ?? 'lecture')
   const [image, setImage] = useState(existingEvent?.image ?? '')
+  const [imagePreview, setImagePreview] = useState(existingEvent?.image ?? '')
   const [registrationUrl, setRegistrationUrl] = useState(existingEvent?.registrationUrl ?? '')
+
+  useEffect(() => {
+    setTitle(existingEvent?.title ?? '')
+    setDescription(existingEvent?.description ?? '')
+    setDate(existingEvent?.date ?? '')
+    setTime(existingEvent?.time ?? '')
+    setLocation(existingEvent?.location ?? '')
+    setType(existingEvent?.type ?? 'lecture')
+    setImage(existingEvent?.image ?? '')
+    setImagePreview(existingEvent?.image ?? '')
+    setRegistrationUrl(existingEvent?.registrationUrl ?? '')
+  }, [existingEvent])
+
+  function handleImageFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : ''
+      setImage(result)
+      setImagePreview(result)
+    }
+    reader.readAsDataURL(file)
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -108,12 +134,44 @@ function EventEditor({ existingEvent, onSave, onCancel }: EventEditorProps) {
         </select>
       </div>
 
-      <Input
-        label="Image URL"
-        value={image}
-        onChange={(e) => setImage(e.target.value)}
-        placeholder="https://example.com/image.jpg"
-      />
+      <div style={{ display: 'grid', gap: '12px' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 600, color: 'var(--text-heading)' }}>
+            Image upload
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageFileChange}
+            style={{
+              width: '100%', border: '1.5px dashed var(--border-default)', borderRadius: 'var(--radius-button)',
+              background: 'var(--gray-50)', padding: '12px 16px', fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text-body)',
+            }}
+          />
+        </div>
+
+        <Input
+          label="Or image URL"
+          value={image}
+          onChange={(e) => {
+            setImage(e.target.value)
+            setImagePreview(e.target.value)
+          }}
+          placeholder="https://example.com/image.jpg"
+        />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-card)', padding: '12px', background: 'var(--gray-50)' }}>
+          <div
+            style={{
+              width: '72px', height: '72px', borderRadius: '12px', flexShrink: 0,
+              background: imagePreview ? `center/cover no-repeat url(${imagePreview})` : 'linear-gradient(135deg, #D1D5DB, #9CA3AF)',
+            }}
+          />
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            Upload a file or paste an image URL. The selected image will be saved with the event.
+          </div>
+        </div>
+      </div>
 
       <Input
         label="Registration URL (optional)"
