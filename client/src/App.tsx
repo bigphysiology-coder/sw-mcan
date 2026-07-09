@@ -37,6 +37,7 @@ const AdminGalleryPage = lazy(() => import('@/pages/admin/AdminGalleryPage'))
 const AdminExecutivesPage = lazy(() => import('@/pages/admin/AdminExecutivesPage'))
 const AdminWebContentPage = lazy(() => import('@/pages/admin/AdminWebContentPage'))
 const AdminDigitalIdsPage = lazy(() => import('@/pages/admin/AdminDigitalIdsPage'))
+const AdminMessagesPage = lazy(() => import('@/pages/admin/AdminMessagesPage'))
 
 function Layout() {
   const { pathname } = useLocation()
@@ -87,6 +88,7 @@ function Layout() {
                 <Route path="executives" element={<Suspense fallback={fallback}><AdminExecutivesPage /></Suspense>} />
                 <Route path="webcontent" element={<Suspense fallback={fallback}><AdminWebContentPage /></Suspense>} />
                 <Route path="digital-ids" element={<Suspense fallback={fallback}><AdminDigitalIdsPage /></Suspense>} />
+                <Route path="messages" element={<Suspense fallback={fallback}><AdminMessagesPage /></Suspense>} />
               </Route>
             </Route>
           </Routes>

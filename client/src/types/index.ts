@@ -134,6 +134,16 @@ export interface WebContent {
   sections: WebContentSection[]
 }
 
+export interface ContactMessage {
+  id: string
+  name: string
+  email: string
+  state: string
+  message: string
+  createdAt: string
+  read: boolean
+}
+
 export interface ApiError {
   message: string
   status: number
