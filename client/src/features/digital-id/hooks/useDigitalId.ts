@@ -13,7 +13,7 @@ function useDigitalId(userId?: string) {
     enabled: !!userId,
   })
 
-  const requestMutation = useMutation<DigitalIdRequest, Error, Omit<DigitalIdRequest, 'id' | 'status' | 'createdAt'> & { userId?: string; holderSignature?: string }>({
+  const requestMutation = useMutation<DigitalIdRequest, Error, { passportPhoto: string; signature?: string; additionalNote?: string }>({
     mutationFn: (data) => digitalIdApi.requestDigitalId(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: DIGITAL_ID_KEY }),
   })
@@ -40,7 +40,7 @@ function useDigitalIdRequests() {
   })
 
   const rejectMutation = useMutation<DigitalIdRequest, Error, { id: string; reason?: string }>({
-    mutationFn: ({ id, reason }) => digitalIdApi.rejectRequest(id, reason),
+    mutationFn: ({ id, reason }) => digitalIdApi.rejectRequest(id, reason ?? ''),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: DIGITAL_ID_KEY }),
   })
 

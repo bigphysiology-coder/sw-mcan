@@ -1,58 +1,32 @@
-import { useState } from 'react'
+import { useAuth as useAuthContext } from '@/context/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
-import { authApi } from '@/features/auth/services/authApi'
 import { ROUTES } from '@/constants'
 import type { LoginPayload, RegisterPayload } from '@/types'
 
 function useAuth() {
   const navigate = useNavigate()
-  const { user, isAuthenticated, setAuth, logout: storeLogout } = useAuthStore()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { user, isAuthenticated, login: ctxLogin, register: ctxRegister, logout: ctxLogout, isLoading } = useAuthContext()
 
   async function login(payload: LoginPayload) {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const res = await authApi.login(payload)
-      setAuth(res.user, res.token)
-      if (res.user.role === 'admin') {
-        navigate(ROUTES.ADMIN.DASHBOARD, { replace: true })
-      } else {
-        navigate(ROUTES.HOME, { replace: true })
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed'
-      setError(message)
-      throw err
-    } finally {
-      setIsLoading(false)
+    await ctxLogin(payload)
+    if (user?.role === 'admin') {
+      navigate(ROUTES.ADMIN.DASHBOARD, { replace: true })
+    } else {
+      navigate(ROUTES.HOME, { replace: true })
     }
   }
 
   async function register(payload: RegisterPayload) {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const res = await authApi.register(payload)
-      setAuth(res.user, res.token)
-      navigate(ROUTES.HOME, { replace: true })
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Registration failed'
-      setError(message)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  function logout() {
-    storeLogout()
+    await ctxRegister(payload)
     navigate(ROUTES.HOME, { replace: true })
   }
 
-  return { user, isAuthenticated, login, register, logout, isLoading, error }
+  function logout() {
+    ctxLogout()
+    navigate(ROUTES.HOME, { replace: true })
+  }
+
+  return { user, isAuthenticated, login, register, logout, isLoading, error: null }
 }
 
 export { useAuth }

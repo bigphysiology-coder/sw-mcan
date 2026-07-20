@@ -192,7 +192,7 @@ export default function AdminDigitalIdsPage() {
               <div key={req.id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 18px', borderBottom: expandedId === req.id ? '1px solid #E5E7EB' : '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--admin-brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, color: 'var(--admin-brand)', flexShrink: 0 }}>
-                    {req.fullName.split(' ').map((s) => s[0]).join('').slice(0, 2)}
+                    {(req.fullName ?? '?').split(' ').map((s) => s[0]).join('').slice(0, 2)}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontWeight: 600, color: '#1F2937', margin: 0, fontSize: '14px' }}>{req.fullName}</p>
@@ -210,7 +210,7 @@ export default function AdminDigitalIdsPage() {
                       Approve
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); setRejectModal({ id: req.id, name: req.fullName }) }}
+                      onClick={(e) => { e.stopPropagation(); setRejectModal({ id: req.id, name: req.fullName ?? '' }) }}
                       disabled={isRejecting}
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: '#DC2626', color: '#fff', fontSize: '13px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: isRejecting ? 'not-allowed' : 'pointer', opacity: isRejecting ? 0.6 : 1, fontFamily: 'inherit' }}
                     >
@@ -224,10 +224,10 @@ export default function AdminDigitalIdsPage() {
                   <div style={{ padding: '16px 18px', background: '#F9FAFB', borderBottom: '1px solid #F3F4F6' }}>
                     <div style={{ display: 'flex', gap: '20px' }}>
                       <div style={{ flex: 1 }}>
-                        {detailRow('Post Held', req.postHeld)}
-                        {detailRow('Validity Begin', req.validityBegin)}
-                        {detailRow('Validity End', req.validityEnd)}
-                        {detailRow('Phone', req.phone)}
+                        {detailRow('Post Held', req.postHeld ?? '')}
+                        {detailRow('Validity Begin', req.validityBegin ?? '')}
+                        {detailRow('Validity End', req.validityEnd ?? '')}
+                        {detailRow('Phone', req.phone ?? '')}
                         {detailRow('Submitted', formatDate(req.createdAt))}
                       </div>
                       {req.photo && (
@@ -248,12 +248,12 @@ export default function AdminDigitalIdsPage() {
       {approved.length > 0 && (
         <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid #E5E7EB', fontSize: '16px', fontWeight: 700, color: '#374151', background: '#F9FAFB' }}>Approved</div>
-          {approved.map((req) => (
+            {approved.map((req) => (
             <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
               <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#065F46', flexShrink: 0 }}>
-                {req.fullName.split(' ').map((s) => s[0]).join('').slice(0, 2)}
+                {(req.fullName ?? '?').split(' ').map((s) => s[0]).join('').slice(0, 2)}
               </div>
-              <div style={{ flex: 1, fontSize: '14px', color: '#374151', fontWeight: 500 }}>{req.fullName}</div>
+              <div style={{ flex: 1, fontSize: '14px', color: '#374151', fontWeight: 500 }}>{req.fullName ?? ''}</div>
               <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{req.nyscCallUpNumber}</span>
               <button
                 onClick={() => setPreviewCard(req)}
@@ -282,12 +282,12 @@ export default function AdminDigitalIdsPage() {
       {rejected.length > 0 && (
         <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden', marginTop: '24px' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid #E5E7EB', fontSize: '16px', fontWeight: 700, color: '#374151', background: '#F9FAFB' }}>Rejected</div>
-          {rejected.map((req) => (
+            {rejected.map((req) => (
             <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
               <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#991B1B', flexShrink: 0 }}>
-                {req.fullName.split(' ').map((s) => s[0]).join('').slice(0, 2)}
+                {(req.fullName ?? '?').split(' ').map((s) => s[0]).join('').slice(0, 2)}
               </div>
-              <div style={{ flex: 1, fontSize: '14px', color: '#374151', fontWeight: 500 }}>{req.fullName}</div>
+              <div style={{ flex: 1, fontSize: '14px', color: '#374151', fontWeight: 500 }}>{req.fullName ?? ''}</div>
               <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{req.nyscCallUpNumber}</span>
               {req.reason && <span style={{ fontSize: '12px', color: '#DC2626', fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.reason}</span>}
               <button
@@ -308,11 +308,11 @@ export default function AdminDigitalIdsPage() {
         <div onClick={() => setPreviewCard(null)} style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
             <IdCardPreview idData={{
-              fullName: previewCard.fullName,
-              state: previewCard.state,
+              fullName: previewCard.fullName ?? '',
+              state: previewCard.state ?? '',
               validityBegin: previewCard.validityBegin || '',
               validityEnd: previewCard.validityEnd || '',
-              nyscCallUpNumber: previewCard.nyscCallUpNumber,
+              nyscCallUpNumber: previewCard.nyscCallUpNumber ?? '',
               issueDate: previewCard.createdAt,
               photo: previewCard.photo || '',
               phone: previewCard.phone || user?.phone || '',
@@ -320,7 +320,7 @@ export default function AdminDigitalIdsPage() {
               holderSignature: previewCard.holderSignature || '',
             }} />
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button onClick={() => { printCard({ ...previewCard, phone: previewCard.phone || user?.phone || '', postHeld: previewCard.postHeld || '', validityBegin: previewCard.validityBegin || '', validityEnd: previewCard.validityEnd || '', holderSignature: previewCard.holderSignature || '' }); setPreviewCard(null); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', background: '#1a4731', color: '#fff', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => { printCard({ fullName: previewCard.fullName ?? '', state: previewCard.state ?? '', nyscCallUpNumber: previewCard.nyscCallUpNumber ?? '', photo: previewCard.photo, createdAt: previewCard.createdAt, phone: previewCard.phone || user?.phone || '', postHeld: previewCard.postHeld || '', validityBegin: previewCard.validityBegin || '', validityEnd: previewCard.validityEnd || '', holderSignature: previewCard.holderSignature || '' }); setPreviewCard(null); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', background: '#1a4731', color: '#fff', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>
                 <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 9V3h12v6M6 9H4a2 2 0 00-2 2v5a2 2 0 002 2h16a2 2 0 002-2v-5a2 2 0 00-2-2h-2M6 9h12M6 15h12"/></svg>
                 Print Card
               </button>

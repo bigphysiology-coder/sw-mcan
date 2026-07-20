@@ -71,12 +71,7 @@ function ApprovalQueue({ members, onUpdate }: ApprovalQueueProps) {
       gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
     } as React.CSSProperties}>
       {members.map((member) => {
-        const initials = member.name
-          .split(' ')
-          .map((n) => n[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2)
+        const initials = (member.firstName[0] + (member.lastName?.[0] ?? '')).toUpperCase()
 
         return (
           <div key={member.id} style={{
@@ -98,7 +93,7 @@ function ApprovalQueue({ members, onUpdate }: ApprovalQueueProps) {
                 <h3 style={{
                   fontFamily: 'var(--font-heading)', fontWeight: 600,
                   color: 'var(--text-heading)', margin: 0,
-                } as React.CSSProperties}>{member.name}</h3>
+                } as React.CSSProperties}>{member.firstName} {member.lastName}</h3>
                 <p style={{
                   fontSize: '14px', color: 'var(--text-muted)', margin: 0,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -189,34 +184,6 @@ function ApprovalQueue({ members, onUpdate }: ApprovalQueueProps) {
                       </button>
                     </div>
                   )}
-                </div>
-              ) : member.status === 'rejected' ? (
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' } as React.CSSProperties}>
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '4px', flex: 1,
-                    padding: '8px 16px', borderRadius: 'var(--radius-button)',
-                    background: '#FEF2F2', color: '#DC2626', fontSize: '14px', fontWeight: 600,
-                    fontFamily: 'var(--font-body)',
-                  } as React.CSSProperties}>
-                    <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                    Rejected{member.reason ? `: ${member.reason}` : ''}
-                  </span>
-                  <button
-                    onClick={() => handleDelete(member)}
-                    disabled={actionLoading === member.id}
-                    style={{
-                      borderRadius: 'var(--radius-button)',
-                      background: '#DC2626', color: '#fff',
-                      padding: '8px 12px', fontSize: '13px', fontWeight: 600,
-                      border: 'none', cursor: actionLoading === member.id ? 'not-allowed' : 'pointer',
-                      fontFamily: 'var(--font-body)',
-                      opacity: actionLoading === member.id ? 0.5 : 1,
-                      display: 'inline-flex', alignItems: 'center', gap: '4px',
-                    } as React.CSSProperties}
-                  >
-                    <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    Delete
-                  </button>
                 </div>
               ) : (
                 <span style={{

@@ -1,8 +1,9 @@
 export interface User {
   id: string
+  firstName: string
+  lastName: string
   email: string
-  name: string
-  role: 'admin' | 'member'
+  role: 'member' | 'admin' | 'superadmin'
   avatar?: string
   state?: string
   phone?: string
@@ -14,7 +15,7 @@ export interface User {
 
 export interface AuthResponse {
   user: User
-  token: string
+  accessToken: string
 }
 
 export interface LoginPayload {
@@ -23,18 +24,33 @@ export interface LoginPayload {
 }
 
 export interface RegisterPayload {
-  name: string
+  firstName: string
+  lastName: string
   email: string
+  phone: string
   password: string
+  confirmPassword: string
   state: string
-  phone?: string
-  nyscCallUpNumber?: string
+  chapter: string
+  membershipType: 'full' | 'associate' | 'student' | 'corporate'
+  occupation?: string
 }
 
-export interface Member extends User {
-  status: 'pending' | 'active' | 'inactive' | 'completed' | 'rejected'
-  digitalIdStatus: 'not_requested' | 'pending' | 'approved' | 'rejected'
-  reason?: string
+export interface Member {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  role: 'member' | 'admin' | 'superadmin'
+  state?: string
+  phone?: string
+  nyscCallUpNumber?: string
+  status: 'active' | 'pending' | 'suspended' | 'deactivated'
+  membershipType?: 'full' | 'associate' | 'student' | 'corporate'
+  chapter?: string
+  occupation?: string
+  avatar?: string
+  createdAt: string
 }
 
 export interface NewsItem {
@@ -43,39 +59,56 @@ export interface NewsItem {
   slug: string
   excerpt: string
   content: string
-  image: string
+  coverImage: string
+  category: 'announcement' | 'news' | 'press-release' | 'update'
   author: string
   publishedAt: string
   tags: string[]
+  featured?: boolean
+  status: 'draft' | 'published'
 }
 
 export interface EventItem {
   id: string
   title: string
   description: string
-  date: string
-  time: string
-  location: string
-  image: string
-  type: 'lecture' | 'welfare' | 'education' | 'outreach' | 'convention'
-  registrationUrl?: string
+  startDate: string
+  endDate?: string
+  location: {
+    venue?: string
+    address?: string
+    city?: string
+    state?: string
+    isOnline?: boolean
+    onlineLink?: string
+  }
+  coverImage: string
+  category: 'meeting' | 'conference' | 'seminar' | 'workshop' | 'social' | 'other'
+  capacity?: number
+  isFree?: boolean
+  organizerContact?: string
+  status: 'draft' | 'published' | 'cancelled'
+  slug: string
 }
 
 export interface DigitalIdRequest {
   id: string
   userId: string
-  fullName: string
-  nyscCallUpNumber: string
-  state: string
-  postHeld: string
-  validityBegin: string
-  validityEnd: string
-  phone: string
-  photo: string
-  holderSignature: string
-  status: 'pending' | 'approved' | 'rejected'
+  passportPhoto: string
+  signature?: string
+  additionalNote?: string
+  status: 'pending' | 'approved' | 'rejected' | 'revoked'
   reason?: string
   createdAt: string
+  fullName?: string
+  state?: string
+  nyscCallUpNumber?: string
+  photo?: string
+  phone?: string
+  postHeld?: string
+  validityBegin?: string
+  validityEnd?: string
+  holderSignature?: string
 }
 
 export interface PaginatedResponse<T> {
@@ -136,9 +169,12 @@ export interface WebContent {
 
 export interface ContactMessage {
   id: string
-  name: string
+  firstName: string
+  lastName: string
   email: string
-  state: string
+  phone?: string
+  subject: string
+  category: 'general' | 'membership' | 'events' | 'partnership' | 'complaint' | 'other'
   message: string
   createdAt: string
   read: boolean

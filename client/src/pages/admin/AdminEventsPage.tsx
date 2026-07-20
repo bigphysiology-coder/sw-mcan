@@ -15,7 +15,7 @@ export default function AdminEventsPage() {
 
   const now = new Date()
   const filtered = events.filter((e) => {
-    const eventDate = new Date(e.date)
+    const eventDate = new Date(e.startDate)
     return filter === 'upcoming' ? eventDate >= now : eventDate < now
   })
 
@@ -85,7 +85,7 @@ export default function AdminEventsPage() {
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'
                 } as React.CSSProperties}>
-                  <Badge tone="neutral">{event.type}</Badge>
+                  <Badge tone="neutral">{event.category}</Badge>
                 </div>
                 <h3 style={{
                   fontFamily: 'var(--font-heading)', fontWeight: 600,
@@ -100,16 +100,16 @@ export default function AdminEventsPage() {
                   marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '16px',
                   fontSize: '12px', color: 'var(--text-muted)'
                 } as React.CSSProperties}>
-                  <span>{new Date(event.date).toLocaleDateString()}</span>
-                  <span>{event.time}</span>
-                  <span>{event.location}</span>
+                  <span>{new Date(event.startDate).toLocaleDateString()}</span>
+                  {event.endDate && <span>to {new Date(event.endDate).toLocaleDateString()}</span>}
+                  <span>{event.location.venue || event.location.city || event.location.address || ''}</span>
                 </div>
               </div>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '8px'
               } as React.CSSProperties}>
-                <Badge tone={new Date(event.date) >= now ? 'green' : 'neutral'}>
-                  {new Date(event.date) >= now ? 'Upcoming' : 'Past'}
+                <Badge tone={new Date(event.startDate) >= now ? 'green' : 'neutral'}>
+                  {new Date(event.startDate) >= now ? 'Upcoming' : 'Past'}
                 </Badge>
                 <Button variant="ghost" size="sm" onClick={() => setEditingEvent(event)}>Edit</Button>
                 <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(event)}>Delete</Button>

@@ -21,7 +21,7 @@ export default function AdminDashboard() {
   const [messages, setMessages] = useState<ContactMessage[]>([])
 
   useEffect(() => {
-    setMessages(contactApi.getAll())
+    contactApi.getAll().then(setMessages)
   }, [])
 
   const activeMembers = useMemo(() => members.filter((m) => m.status === 'active').length, [members])
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
   return (
     <div>
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: 0 }}>Welcome back, {user?.name?.split(' ')[0] || 'Admin'}</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: 0 }}>Welcome back, {user?.firstName || 'Admin'}</h1>
         <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '4px' }}>Here&rsquo;s what&rsquo;s happening across the Southwest zone today.</p>
       </div>
 
@@ -76,10 +76,10 @@ export default function AdminDashboard() {
             {pendingApprovals.length > 0 ? pendingApprovals.slice(0, 5).map((m) => (
               <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--admin-brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: 'var(--admin-brand)', flexShrink: 0 }}>
-                  {m.name.split(' ').map((s) => s[0]).join('').slice(0, 2)}
+                  {(m.firstName?.[0] ?? '') + (m.lastName?.[0] ?? '')}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#374151' }}>{m.name}</p>
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#374151' }}>{m.firstName} {m.lastName}</p>
                   <p style={{ margin: 0, fontSize: '12px', color: '#9CA3AF' }}>{m.state} &middot; {m.nyscCallUpNumber}</p>
                 </div>
                 <span style={{ fontSize: '12px', color: '#F59E0B' }}>Pending</span>
@@ -106,10 +106,10 @@ export default function AdminDashboard() {
             {unreadMessages.length > 0 ? unreadMessages.slice(0, 5).map((msg) => (
               <div key={msg.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--admin-brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: 'var(--admin-brand)', flexShrink: 0 }}>
-                  {msg.name.split(' ').map((s) => s[0]).join('').slice(0, 2)}
+                  {(msg.firstName?.[0] ?? '') + (msg.lastName?.[0] ?? '')}
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#374151' }}>{msg.name}</p>
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#374151' }}>{msg.firstName} {msg.lastName}</p>
                   <p style={{ margin: 0, fontSize: '12px', color: '#9CA3AF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.message}</p>
                 </div>
                 <span style={{ fontSize: '12px', color: '#F59E0B', whiteSpace: 'nowrap' }}>New</span>

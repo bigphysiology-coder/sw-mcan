@@ -14,8 +14,8 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
   const [slug, setSlug] = useState(existingNews?.slug ?? '')
   const [excerpt, setExcerpt] = useState(existingNews?.excerpt ?? '')
   const [content, setContent] = useState(existingNews?.content ?? '')
-  const [image, setImage] = useState(existingNews?.image ?? '')
-  const [imagePreview, setImagePreview] = useState(existingNews?.image ?? '')
+  const [coverImage, setCoverImage] = useState(existingNews?.coverImage ?? '')
+  const [imagePreview, setImagePreview] = useState(existingNews?.coverImage ?? '')
   const [tags, setTags] = useState(existingNews?.tags.join(', ') ?? '')
 
   useEffect(() => {
@@ -30,8 +30,8 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
   }, [title, existingNews])
 
   useEffect(() => {
-    setImage(existingNews?.image ?? '')
-    setImagePreview(existingNews?.image ?? '')
+    setCoverImage(existingNews?.coverImage ?? '')
+    setImagePreview(existingNews?.coverImage ?? '')
   }, [existingNews])
 
   function handleImageFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -41,7 +41,7 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
     const reader = new FileReader()
     reader.onload = () => {
       const result = typeof reader.result === 'string' ? reader.result : ''
-      setImage(result)
+      setCoverImage(result)
       setImagePreview(result)
     }
     reader.readAsDataURL(file)
@@ -54,7 +54,7 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
       slug,
       excerpt,
       content,
-      image,
+      coverImage,
       tags: tags
         .split(',')
         .map((t) => t.trim())
@@ -134,9 +134,9 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
 
         <Input
           label="Or image URL"
-          value={image}
+          value={coverImage}
           onChange={(e) => {
-            setImage(e.target.value)
+            setCoverImage(e.target.value)
             setImagePreview(e.target.value)
           }}
           placeholder="https://example.com/image.jpg"

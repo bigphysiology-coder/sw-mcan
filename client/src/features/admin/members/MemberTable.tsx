@@ -13,13 +13,6 @@ const statusBadgeVariant: Record<string, 'green' | 'gold' | 'neutral'> = {
   completed: 'neutral',
 }
 
-const digitalIdBadgeVariant: Record<string, 'green' | 'gold' | 'red' | 'neutral'> = {
-  approved: 'green',
-  pending: 'gold',
-  rejected: 'red',
-  not_requested: 'neutral',
-}
-
 function MemberTable() {
   const { members, isLoading } = useMembers()
   const [search, setSearch] = useState('')
@@ -28,7 +21,7 @@ function MemberTable() {
   const filtered = members.filter((m) => {
     const matchesSearch =
       !search ||
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
+      `${m.firstName} ${m.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
       m.email.toLowerCase().includes(search.toLowerCase())
     const matchesFilter = activeFilter === 'All' || m.status === activeFilter.toLowerCase()
     return matchesSearch && matchesFilter
@@ -102,14 +95,13 @@ function MemberTable() {
               <th style={thStyle}>Email</th>
               <th style={thStyle}>State</th>
               <th style={thStyle}>Status</th>
-              <th style={thStyle}>MCAN Southwest ID</th>
               <th style={thStyle}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} style={{
+                <td colSpan={5} style={{
                   padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)',
                 } as React.CSSProperties}>
                   Loading...
@@ -117,7 +109,7 @@ function MemberTable() {
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{
+                <td colSpan={5} style={{
                   padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)',
                 } as React.CSSProperties}>
                   No members found
@@ -134,16 +126,11 @@ function MemberTable() {
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--gray-50)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
                 >
-                  <td style={{ ...cellStyle, fontWeight: 500, color: 'var(--text-heading)' } as React.CSSProperties}>{member.name}</td>
+                  <td style={{ ...cellStyle, fontWeight: 500, color: 'var(--text-heading)' } as React.CSSProperties}>{member.firstName} {member.lastName}</td>
                   <td style={{ ...cellStyle, color: 'var(--text-body)' } as React.CSSProperties}>{member.email}</td>
                   <td style={{ ...cellStyle, color: 'var(--text-body)' } as React.CSSProperties}>{member.state ?? '—'}</td>
                   <td style={cellStyle}>
                     <Badge tone={statusBadgeVariant[member.status]}>{member.status}</Badge>
-                  </td>
-                  <td style={cellStyle}>
-                    <Badge tone={digitalIdBadgeVariant[member.digitalIdStatus]}>
-                      {member.digitalIdStatus.replace('_', ' ')}
-                    </Badge>
                   </td>
                   <td style={cellStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' } as React.CSSProperties}>

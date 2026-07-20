@@ -63,11 +63,13 @@ export default function EventDetailPage() {
           {event.title}
         </h1>
         <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-          {event.date} · {event.time} · {event.location}
+          {new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          {event.location.venue ? ` · ${event.location.venue}` : ''}
+          {event.location.city ? `, ${event.location.city}` : ''}
         </p>
 
-        {event.image && (
-          <img src={event.image} alt={event.title} style={{ width: '100%', borderRadius: '18px', marginBottom: '24px', objectFit: 'cover', maxHeight: '360px' }} />
+        {event.coverImage && (
+          <img src={event.coverImage} alt={event.title} style={{ width: '100%', borderRadius: '18px', marginBottom: '24px', objectFit: 'cover', maxHeight: '360px' }} />
         )}
 
         <p style={{ lineHeight: 1.8, color: 'var(--text-body)', whiteSpace: 'pre-line' }}>{event.description}</p>

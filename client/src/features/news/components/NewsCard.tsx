@@ -10,8 +10,8 @@ interface NewsCardProps {
 function NewsCard({ news }: NewsCardProps) {
   return (
     <div className="overflow-hidden rounded-card border border-border-subtle bg-surface-card shadow-sm">
-      {news.image ? (
-        <img src={news.image} alt={news.title} className="h-44 w-full object-cover" />
+      {news.coverImage ? (
+        <img src={news.coverImage} alt={news.title} className="h-44 w-full object-cover" />
       ) : (
         <div className="flex h-44 w-full items-center justify-center bg-gray-200 text-gray-400">
           <svg className="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">

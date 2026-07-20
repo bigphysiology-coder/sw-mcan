@@ -165,9 +165,9 @@ function Navbar() {
                   className="flex items-center gap-2"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.firstName.charAt(0).toUpperCase()}
                   </div>
-                  <span className="hidden text-sm font-semibold text-text-body md:inline">{user.name.split(' ')[0]}</span>
+                  <span className="hidden text-sm font-semibold text-text-body md:inline">{user.firstName}</span>
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-48 rounded-card border border-border-subtle bg-surface-card py-2 shadow-lg">

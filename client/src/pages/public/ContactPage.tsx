@@ -4,10 +4,22 @@ import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { contactApi } from '@/features/contact/services/contactApi'
 
+const CONTACT_CATEGORIES = [
+  { value: 'general', label: 'General Inquiry' },
+  { value: 'membership', label: 'Membership' },
+  { value: 'events', label: 'Events' },
+  { value: 'partnership', label: 'Partnership' },
+  { value: 'complaint', label: 'Complaint' },
+  { value: 'other', label: 'Other' },
+] as const
+
 export default function Contact() {
-  const [name, setName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
-  const [state, setState] = useState('Lagos')
+  const [phone, setPhone] = useState('')
+  const [subject, setSubject] = useState('')
+  const [category, setCategory] = useState('general')
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [sending, setSending] = useState(false)
@@ -18,22 +30,32 @@ export default function Contact() {
     borderRadius: 'var(--radius-button)', border: '1.5px solid var(--border-default)',
     background: 'var(--white)', color: 'var(--text-heading)', outline: 'none', width: '100%',
   }
-  const states = ['Lagos', 'Ogun', 'Oyo', 'Osun', 'Ondo', 'Ekiti']
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!name.trim() || !email.trim() || !message.trim()) {
-      setError('Please fill in all fields.')
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !subject.trim() || !message.trim()) {
+      setError('Please fill in all required fields.')
       return
     }
     setSending(true)
     setError('')
     try {
-      await contactApi.send({ name: name.trim(), email: email.trim(), state, message: message.trim() })
+      await contactApi.send({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        subject: subject.trim(),
+        category,
+        message: message.trim(),
+        phone: phone.trim() || undefined,
+      })
       setSubmitted(true)
-      setName('')
+      setFirstName('')
+      setLastName('')
       setEmail('')
-      setState('Lagos')
+      setPhone('')
+      setSubject('')
+      setCategory('general')
       setMessage('')
     } catch {
       setError('Something went wrong. Please try again.')
@@ -73,13 +95,18 @@ export default function Contact() {
       <Reveal delay={0.1}>
         <form onSubmit={handleSubmit} style={{ background: 'var(--surface-card)', borderRadius: 'var(--radius-section)', padding: '32px', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-            <input style={inputStyle} placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
-            <input style={inputStyle} type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input style={inputStyle} placeholder="First name *" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+            <input style={inputStyle} placeholder="Last name *" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
           </div>
-          <select style={inputStyle} value={state} onChange={(e) => setState(e.target.value)}>
-            {states.map((s) => <option key={s}>{s} State</option>)}
+          <div className="resp-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <input style={inputStyle} type="email" placeholder="Email address *" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input style={inputStyle} type="tel" placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </div>
+          <select style={inputStyle} value={category} onChange={(e) => setCategory(e.target.value)}>
+            {CONTACT_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
-          <textarea style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }} placeholder="How can we help?" value={message} onChange={(e) => setMessage(e.target.value)} required />
+          <input style={inputStyle} placeholder="Subject *" value={subject} onChange={(e) => setSubject(e.target.value)} required />
+          <textarea style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }} placeholder="How can we help? *" value={message} onChange={(e) => setMessage(e.target.value)} required />
           {error && <p style={{ color: '#DC2626', fontSize: '14px', margin: 0 }}>{error}</p>}
           <Button variant="primary" size="lg" type="submit" disabled={sending}>{sending ? 'Sending...' : 'Send message'}</Button>
         </form>

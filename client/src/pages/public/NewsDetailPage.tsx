@@ -66,8 +66,8 @@ export default function NewsDetailPage() {
           Published {new Date(article.publishedAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
 
-        {article.image && (
-          <img src={article.image} alt={article.title} style={{ width: '100%', borderRadius: '18px', marginBottom: '24px', objectFit: 'cover', maxHeight: '360px' }} />
+        {article.coverImage && (
+          <img src={article.coverImage} alt={article.title} style={{ width: '100%', borderRadius: '18px', marginBottom: '24px', objectFit: 'cover', maxHeight: '360px' }} />
         )}
 
         <p style={{ lineHeight: 1.8, color: 'var(--text-body)', whiteSpace: 'pre-line' }}>{article.content}</p>

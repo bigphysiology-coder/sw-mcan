@@ -3,43 +3,57 @@ import { Link } from 'react-router-dom'
 import { Input } from '@/components/ui/Input'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { STATES } from '@/constants'
-import { isValidEmail, isStrongPassword } from '@/utils/validators'
+import { isValidEmail, isStrongPassword, isValidPhone } from '@/utils/validators'
 
 interface FormErrors {
-  name?: string
+  firstName?: string
+  lastName?: string
   email?: string
+  phone?: string
   password?: string
   confirmPassword?: string
   state?: string
-  phone?: string
-  nyscCallUpNumber?: string
+  chapter?: string
+  membershipType?: string
 }
+
+const MEMBERSHIP_TYPES = [
+  { value: 'full', label: 'Full' },
+  { value: 'associate', label: 'Associate' },
+  { value: 'student', label: 'Student' },
+  { value: 'corporate', label: 'Corporate' },
+] as const
 
 function RegisterForm() {
   const { register, isLoading } = useAuth()
-  const [name, setName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [state, setState] = useState('')
-  const [phone, setPhone] = useState('')
-  const [nyscCallUpNumber, setNyscCallUpNumber] = useState('')
+  const [chapter, setChapter] = useState('')
+  const [membershipType, setMembershipType] = useState('full')
+  const [occupation, setOccupation] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
   const [serverError, setServerError] = useState<string | null>(null)
 
   function validate(): boolean {
     const errs: FormErrors = {}
-    if (!name.trim()) errs.name = 'Name is required'
+    if (!firstName.trim()) errs.firstName = 'First name is required'
+    if (!lastName.trim()) errs.lastName = 'Last name is required'
     if (!email.trim()) errs.email = 'Email is required'
     else if (!isValidEmail(email.trim())) errs.email = 'Invalid email format'
+    if (!phone.trim()) errs.phone = 'Phone number is required'
+    else if (!isValidPhone(phone.trim())) errs.phone = 'Invalid phone number (e.g. +2348012345678)'
     if (!password) errs.password = 'Password is required'
     else if (!isStrongPassword(password)) errs.password = 'Password must be at least 8 characters'
     if (!confirmPassword) errs.confirmPassword = 'Please confirm your password'
     else if (password !== confirmPassword) errs.confirmPassword = 'Passwords do not match'
     if (!state) errs.state = 'State is required'
-    if (phone && !/^(\+234|0)[789]\d{9}$/.test(phone.replace(/\s/g, ''))) {
-      errs.phone = 'Invalid phone number'
-    }
+    if (!chapter.trim()) errs.chapter = 'Chapter is required'
+    if (!membershipType) errs.membershipType = 'Membership type is required'
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -51,12 +65,16 @@ function RegisterForm() {
 
     try {
       await register({
-        name: name.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         email: email.trim(),
+        phone: phone.trim(),
         password,
+        confirmPassword,
         state,
-        phone: phone.trim() || undefined,
-        nyscCallUpNumber: nyscCallUpNumber.trim() || undefined,
+        chapter: chapter.trim(),
+        membershipType: membershipType as 'full' | 'associate' | 'student' | 'corporate',
+        occupation: occupation.trim() || undefined,
       })
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed. Please try again.'
@@ -72,14 +90,24 @@ function RegisterForm() {
         </div>
       )}
 
-      <Input
-        label="Full Name"
-        type="text"
-        placeholder="Enter your full name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        error={errors.name}
-      />
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="First Name"
+          type="text"
+          placeholder="First name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          error={errors.firstName}
+        />
+        <Input
+          label="Last Name"
+          type="text"
+          placeholder="Last name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          error={errors.lastName}
+        />
+      </div>
 
       <Input
         label="Email"
@@ -88,6 +116,15 @@ function RegisterForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         error={errors.email}
+      />
+
+      <Input
+        label="Phone Number"
+        type="tel"
+        placeholder="+2348012345678"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        error={errors.phone}
       />
 
       <Input
@@ -108,42 +145,57 @@ function RegisterForm() {
         error={errors.confirmPassword}
       />
 
+      <div className="grid grid-cols-2 gap-3">
+        <div className="w-full">
+          <label htmlFor="state" className="mb-1 block text-sm font-semibold text-text-heading">
+            State
+          </label>
+          <select
+            id="state"
+            value={state}
+            onChange={(e) => setState(e.target.value)}
+            className={`w-full rounded-button border bg-white px-4 py-3 text-sm text-text-heading outline-none transition-all duration-200 focus:border-brand focus:ring-2 focus:ring-[var(--color-focus-ring)] ${errors.state ? 'border-red-500' : 'border-border-default'}`}
+          >
+            <option value="">Select state</option>
+            {STATES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          {errors.state && <p className="mt-1 text-xs text-red-500">{errors.state}</p>}
+        </div>
+
+        <Input
+          label="Chapter / LGA"
+          type="text"
+          placeholder="e.g. Ikeja"
+          value={chapter}
+          onChange={(e) => setChapter(e.target.value)}
+          error={errors.chapter}
+        />
+      </div>
+
       <div className="w-full">
-        <label htmlFor="state" className="mb-1 block text-sm font-semibold text-text-heading">
-          State
+        <label htmlFor="membershipType" className="mb-1 block text-sm font-semibold text-text-heading">
+          Membership Type
         </label>
         <select
-          id="state"
-          value={state}
-          onChange={(e) => setState(e.target.value)}
-          className={`w-full rounded-button border bg-white px-4 py-3 text-sm text-text-heading outline-none transition-all duration-200 focus:border-brand focus:ring-2 focus:ring-[var(--color-focus-ring)] ${errors.state ? 'border-red-500' : 'border-border-default'}`}
+          id="membershipType"
+          value={membershipType}
+          onChange={(e) => setMembershipType(e.target.value)}
+          className="w-full rounded-button border border-border-default bg-white px-4 py-3 text-sm text-text-heading outline-none transition-all duration-200 focus:border-brand focus:ring-2 focus:ring-[var(--color-focus-ring)]"
         >
-          <option value="">Select your state</option>
-          {STATES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
+          {MEMBERSHIP_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>{t.label}</option>
           ))}
         </select>
-        {errors.state && <p className="mt-1 text-xs text-red-500">{errors.state}</p>}
       </div>
 
       <Input
-        label="Phone Number"
-        type="tel"
-        placeholder="080XXXXXXXX"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        error={errors.phone}
-      />
-
-      <Input
-        label="NYSC Call-up Number"
+        label="Occupation (optional)"
         type="text"
-        placeholder="e.g. LA/24A/1234"
-        value={nyscCallUpNumber}
-        onChange={(e) => setNyscCallUpNumber(e.target.value)}
-        error={errors.nyscCallUpNumber}
+        placeholder="e.g. Engineer"
+        value={occupation}
+        onChange={(e) => setOccupation(e.target.value)}
       />
 
       <button

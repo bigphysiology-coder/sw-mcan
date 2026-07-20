@@ -5,20 +5,28 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { useEvents } from '@/features/events/hooks/useEvents'
 import type { EventItem } from '@/types'
 
-const eventTypes = ['All', 'Lecture', 'Welfare', 'Education', 'Outreach', 'Convention'] as const
+const eventCategories = [
+  { label: 'All', value: '' },
+  { label: 'Meeting', value: 'meeting' },
+  { label: 'Conference', value: 'conference' },
+  { label: 'Seminar', value: 'seminar' },
+  { label: 'Workshop', value: 'workshop' },
+  { label: 'Social', value: 'social' },
+  { label: 'Other', value: 'other' },
+] as const
 
 export default function EventsPage() {
   const { events, isLoading } = useEvents()
-  const [activeType, setActiveType] = useState('All')
+  const [activeCategory, setActiveCategory] = useState('')
   const [showPast, setShowPast] = useState(false)
 
   const filtered = events.filter((e) => {
-    return activeType === 'All' || e.type === activeType.toLowerCase()
+    return !activeCategory || e.category === activeCategory
   })
 
   const now = new Date()
-  const upcoming = filtered.filter((e) => new Date(e.date) >= now)
-  const past = filtered.filter((e) => new Date(e.date) < now)
+  const upcoming = filtered.filter((e) => new Date(e.startDate) >= now)
+  const past = filtered.filter((e) => new Date(e.startDate) < now)
 
   function renderEventCard(event: EventItem) {
     return (
@@ -28,7 +36,7 @@ export default function EventsPage() {
       >
         <div className="h-44 bg-gradient-to-br from-brand to-brand-strong" />
         <div className="p-5">
-          <Badge tone="neutral">{event.type}</Badge>
+          <Badge tone="neutral">{event.category}</Badge>
           <h3 className="mt-2 font-heading text-lg font-semibold text-text-heading">{event.title}</h3>
           <p className="mt-1 text-sm text-text-body line-clamp-2">{event.description}</p>
           <div className="mt-4 space-y-1 text-xs text-text-muted">
@@ -36,29 +44,16 @@ export default function EventsPage() {
               <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span>{new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{event.time}</span>
+              <span>{new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span>{event.location}</span>
+              <span>{event.location.venue || event.location.city || event.location.address || ''}</span>
             </div>
           </div>
-          {event.registrationUrl && (
-            <div className="mt-4">
-              <Button variant="primary" size="sm" onClick={() => window.open(event.registrationUrl, '_blank')}>
-                Register
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     )
@@ -81,17 +76,17 @@ export default function EventsPage() {
       <section className="bg-surface-page py-12">
         <div className="container">
           <div className="flex flex-wrap justify-center gap-2">
-            {eventTypes.map((t) => (
+            {eventCategories.map((cat) => (
               <button
-                key={t}
-                onClick={() => setActiveType(t)}
+                key={cat.label}
+                onClick={() => setActiveCategory(cat.value)}
                 className={`rounded-pill px-4 py-2 text-sm font-semibold transition-all ${
-                  activeType === t
+                  activeCategory === cat.value
                     ? 'bg-brand text-white'
                     : 'bg-white text-text-body border border-border-default hover:bg-gray-50'
                 }`}
               >
-                {t}
+                {cat.label}
               </button>
             ))}
           </div>

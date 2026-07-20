@@ -13,7 +13,7 @@ export function JoinModal({ onClose }: JoinModalProps) {
   const { createMember, isCreating } = useMembers();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ name: '', email: '', state: 'Lagos', code: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', state: 'Lagos', code: '' });
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const inputStyle: React.CSSProperties = {
@@ -51,7 +51,8 @@ export function JoinModal({ onClose }: JoinModalProps) {
         <div style={{ padding: '26px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {step === 1 ? (
             <>
-              {field('Full name', <input style={inputStyle} value={form.name} onChange={set('name')} placeholder="e.g. Aisha Bello" />)}
+              {field('First name', <input style={inputStyle} value={form.firstName} onChange={set('firstName')} placeholder="e.g. Aisha" />)}
+              {field('Last name', <input style={inputStyle} value={form.lastName} onChange={set('lastName')} placeholder="e.g. Bello" />)}
               {field('Email address', <input style={inputStyle} type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" />)}
               {field('State of deployment', (
                 <select style={inputStyle} value={form.state} onChange={set('state')}>
@@ -68,7 +69,7 @@ export function JoinModal({ onClose }: JoinModalProps) {
                 </div>
               )}
               <div style={{ background: 'var(--green-50)', borderRadius: 'var(--radius-card)', padding: '14px 16px', fontSize: '14px', color: 'var(--green-700)', lineHeight: 1.5 }}>
-                Welcome, {form.name || 'corps member'}. Your {form.state} State chapter will reach out within 48 hours, insha&rsquo;Allah.
+                Welcome, {form.firstName || 'corps member'}. Your {form.state} State chapter will reach out within 48 hours, insha&rsquo;Allah.
               </div>
             </>
           ) : (
@@ -78,7 +79,7 @@ export function JoinModal({ onClose }: JoinModalProps) {
               </div>
               <h4 style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '20px', color: 'var(--text-heading)', margin: '0 0 8px' }}>Registration received</h4>
               <p style={{ margin: '0 0 18px', fontSize: '15px', color: 'var(--text-body)', lineHeight: 1.6 }}>
-                Jazakumullahu khayran, {form.name || 'corps member'}. Your final step: join the community on WhatsApp to connect right away.
+                Jazakumullahu khayran, {form.firstName || 'corps member'}. Your final step: join the community on WhatsApp to connect right away.
               </p>
               <a href="#" target="_blank" rel="noopener noreferrer" style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', textDecoration: 'none',
@@ -103,10 +104,10 @@ export function JoinModal({ onClose }: JoinModalProps) {
                   setSubmitError(null)
                   try {
                     await createMember({
-                      name: form.name,
+                      firstName: form.firstName,
+                      lastName: form.lastName,
                       email: form.email,
                       state: form.state,
-                      nyscCallUpNumber: form.code,
                     })
                     setStep(3)
                   } catch {

@@ -55,19 +55,10 @@ function IdCardRequest({ onSuccess }: IdCardRequestProps) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!fullName.trim() || !nyscCallUpNumber.trim() || !state || !validityBeginMonth || !validityBeginYear || !validityEndMonth || !validityEndYear) return
+    if (!photoPreview) return
 
     await submitRequest({
-      fullName: fullName.trim(),
-      nyscCallUpNumber: nyscCallUpNumber.trim(),
-      state,
-      postHeld: postHeld.trim(),
-      validityBegin: `${validityBeginMonth}, ${validityBeginYear}`,
-      validityEnd: `${validityEndMonth}, ${validityEndYear}`,
-      phone: phone.trim(),
-      photo: photoPreview ?? '',
-      userId: '',
-      holderSignature: '',
+      passportPhoto: photoPreview,
     })
     onSuccess?.()
   }

@@ -68,7 +68,7 @@ function AdminLayout() {
               <div style={{ width: isMobile ? '24px' : '28px', height: isMobile ? '24px' : '28px', borderRadius: '50%', background: '#0E7A48', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: isMobile ? '10px' : '11px', fontWeight: 700 }}>
                 AD
               </div>
-              {!isMobile && <span style={{ fontWeight: 500 }}>{user?.name?.split(' ')[0] || 'Admin'}</span>}
+              {!isMobile && <span style={{ fontWeight: 500 }}>{user?.firstName || 'Admin'}</span>}
             </div>
             {isMobile ? (
               <button onClick={logout} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '4px' }}>

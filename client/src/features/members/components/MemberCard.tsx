@@ -6,26 +6,13 @@ interface MemberCardProps {
 }
 
 function MemberCard({ member }: MemberCardProps) {
-  const initials = member.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+  const initials = (member.firstName[0] + member.lastName[0]).toUpperCase()
 
   const statusVariant = {
     pending: 'gold',
     active: 'green',
-    inactive: 'neutral',
-    completed: 'neutral',
-    rejected: 'red',
-  } as const
-
-  const digitalIdVariant = {
-    not_requested: 'neutral',
-    pending: 'gold',
-    approved: 'green',
-    rejected: 'red',
+    suspended: 'neutral',
+    deactivated: 'red',
   } as const
 
   return (
@@ -35,7 +22,7 @@ function MemberCard({ member }: MemberCardProps) {
           {initials}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-heading font-semibold text-text-heading">{member.name}</h3>
+          <h3 className="truncate font-heading font-semibold text-text-heading">{member.firstName} {member.lastName}</h3>
           <p className="truncate text-sm text-text-muted">{member.email}</p>
         </div>
       </div>
@@ -57,12 +44,7 @@ function MemberCard({ member }: MemberCardProps) {
           <span className="text-text-muted">Status</span>
           <Badge tone={statusVariant[member.status]}>{member.status}</Badge>
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-text-muted">MCAN Southwest ID</span>
-          <Badge tone={digitalIdVariant[member.digitalIdStatus]}>
-            {member.digitalIdStatus.replace('_', ' ')}
-          </Badge>
-        </div>
+
       </div>
     </div>
   )

@@ -7,15 +7,15 @@ import { useMembers } from '@/features/members/hooks/useMembers'
 import type { Member } from '@/types'
 
 const statusBadge: Record<string, 'green' | 'gold' | 'neutral'> = {
-  active: 'green', pending: 'gold', inactive: 'neutral', completed: 'neutral',
+  active: 'green', pending: 'gold', suspended: 'neutral', deactivated: 'neutral',
 }
 
 const placeholderMembers: Partial<Member>[] = [
-  { name: 'Aisha Bello', state: 'Lagos', nyscCallUpNumber: 'SW/24A/1042', status: 'active' },
-  { name: 'Yusuf Adelaja', state: 'Ogun', nyscCallUpNumber: 'SW/24A/2210', status: 'active' },
-  { name: 'Khadijah Ogundele', state: 'Oyo', nyscCallUpNumber: 'SW/24B/0931', status: 'pending' },
-  { name: 'Ismail Salaudeen', state: 'Osun', nyscCallUpNumber: 'SW/24A/1188', status: 'active' },
-  { name: 'Maryam Bankole', state: 'Ondo', nyscCallUpNumber: 'SW/24B/3320', status: 'active' },
+  { firstName: 'Aisha', lastName: 'Bello', state: 'Lagos', nyscCallUpNumber: 'SW/24A/1042', status: 'active' },
+  { firstName: 'Yusuf', lastName: 'Adelaja', state: 'Ogun', nyscCallUpNumber: 'SW/24A/2210', status: 'active' },
+  { firstName: 'Khadijah', lastName: 'Ogundele', state: 'Oyo', nyscCallUpNumber: 'SW/24B/0931', status: 'pending' },
+  { firstName: 'Ismail', lastName: 'Salaudeen', state: 'Osun', nyscCallUpNumber: 'SW/24A/1188', status: 'active' },
+  { firstName: 'Maryam', lastName: 'Bankole', state: 'Ondo', nyscCallUpNumber: 'SW/24B/3320', status: 'active' },
 ]
 
 const initialsStyle: React.CSSProperties = {
@@ -25,7 +25,7 @@ const initialsStyle: React.CSSProperties = {
 }
 
 export default function AdminMembersPage() {
-  const { members, isLoading, deleteMember, isDeleting } = useMembers()
+  const { members, isLoading } = useMembers()
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -34,7 +34,7 @@ export default function AdminMembersPage() {
   const filtered = displayMembers.filter((m) => {
     if (!search) return true
     const q = search.toLowerCase()
-    return (m.name?.toLowerCase().includes(q) || m.state?.toLowerCase().includes(q) || m.nyscCallUpNumber?.toLowerCase().includes(q))
+    return (`${m.firstName} ${m.lastName}`.toLowerCase().includes(q) || m.state?.toLowerCase().includes(q) || m.nyscCallUpNumber?.toLowerCase().includes(q))
   })
 
   function getInitials(name: string) {
@@ -44,7 +44,7 @@ export default function AdminMembersPage() {
   function exportCSV() {
     const headers = ['Name', 'State', 'Call-up Number', 'Status']
     const rows = filtered.map((m) => [
-      m.name || '',
+      `${m.firstName} ${m.lastName}`,
       m.state || '',
       m.nyscCallUpNumber || '',
       m.status || 'pending',
@@ -107,9 +107,9 @@ export default function AdminMembersPage() {
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={initialsStyle}>{getInitials(m.name || '')}</div>
+                  <div style={initialsStyle}>{getInitials(`${m.firstName} ${m.lastName}`)}</div>
                   <div>
-                    <p style={{ fontWeight: 500, margin: 0 }}>{m.name}</p>
+                    <p style={{ fontWeight: 500, margin: 0 }}>{m.firstName} {m.lastName}</p>
                     <p style={{ fontSize: '12px', color: '#9CA3AF', margin: 0 }}>{m.state || '—'}</p>
                   </div>
                 </div>
@@ -118,23 +118,7 @@ export default function AdminMembersPage() {
                   <Badge tone={statusBadge[m.status || 'pending'] || 'neutral'}>
                     {(m.status || 'pending').charAt(0).toUpperCase() + (m.status || 'pending').slice(1)}
                   </Badge>
-                  {m.status === 'rejected' && (
-                    <button
-                      onClick={() => { if (window.confirm('Delete this rejected member?')) { m.id && deleteMember(m.id) } }}
-                      disabled={isDeleting}
-                      title="Delete rejected member"
-                      style={{
-                        background: '#FEF2F2', border: '1px solid #FECACA', cursor: 'pointer',
-                        padding: '4px 6px', color: '#DC2626', borderRadius: '6px',
-                        display: 'inline-flex', alignItems: 'center',
-                        opacity: isDeleting ? 0.5 : 1,
-                      }}
-                    >
-                      <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
+
                 </div>
               </div>
             ))}

@@ -7,11 +7,11 @@ export default function AdminMessagesPage() {
   const [selected, setSelected] = useState<ContactMessage | null>(null)
 
   useEffect(() => {
-    setMessages(contactApi.getAll())
+    contactApi.getAll().then(setMessages)
   }, [])
 
   function refresh() {
-    setMessages(contactApi.getAll())
+    contactApi.getAll().then(setMessages)
     setSelected(null)
   }
 
@@ -64,11 +64,11 @@ export default function AdminMessagesPage() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '15px', fontWeight: msg.read ? 500 : 700, color: '#111827' }}>{msg.name}</span>
+                  <span style={{ fontSize: '15px', fontWeight: msg.read ? 500 : 700, color: '#111827' }}>{msg.firstName} {msg.lastName}</span>
                   <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{new Date(msg.createdAt).toLocaleDateString()}</span>
                 </div>
                 <span style={{ fontSize: '13px', color: msg.read ? '#6B7280' : '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.message}</span>
-                <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{msg.email} &middot; {msg.state}</div>
+                <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{msg.email}</div>
               </button>
             ))}
           </div>
@@ -79,8 +79,8 @@ export default function AdminMessagesPage() {
         <div style={{ flex: 1, background: '#fff', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '24px', minWidth: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
             <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>{selected.name}</h2>
-              <p style={{ fontSize: '14px', color: '#6B7280', margin: '2px 0 0' }}>{selected.email} &middot; {selected.state}</p>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>{selected.firstName} {selected.lastName}</h2>
+              <p style={{ fontSize: '14px', color: '#6B7280', margin: '2px 0 0' }}>{selected.email}</p>
               <p style={{ fontSize: '13px', color: '#9CA3AF', margin: '2px 0 0' }}>{new Date(selected.createdAt).toLocaleString()}</p>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>

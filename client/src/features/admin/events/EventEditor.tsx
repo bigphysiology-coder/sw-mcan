@@ -9,29 +9,25 @@ interface EventEditorProps {
   onCancel: () => void
 }
 
-const EVENT_TYPES: EventItem['type'][] = ['lecture', 'welfare', 'education', 'outreach', 'convention']
+const EVENT_CATEGORIES: EventItem['category'][] = ['meeting', 'conference', 'seminar', 'workshop', 'social', 'other']
 
 function EventEditor({ existingEvent, onSave, onCancel }: EventEditorProps) {
   const [title, setTitle] = useState(existingEvent?.title ?? '')
   const [description, setDescription] = useState(existingEvent?.description ?? '')
-  const [date, setDate] = useState(existingEvent?.date ?? '')
-  const [time, setTime] = useState(existingEvent?.time ?? '')
-  const [location, setLocation] = useState(existingEvent?.location ?? '')
-  const [type, setType] = useState<EventItem['type']>(existingEvent?.type ?? 'lecture')
-  const [image, setImage] = useState(existingEvent?.image ?? '')
-  const [imagePreview, setImagePreview] = useState(existingEvent?.image ?? '')
-  const [registrationUrl, setRegistrationUrl] = useState(existingEvent?.registrationUrl ?? '')
+  const [startDate, setStartDate] = useState(existingEvent?.startDate ?? '')
+  const [venue, setVenue] = useState(existingEvent?.location?.venue ?? '')
+  const [category, setCategory] = useState<EventItem['category']>(existingEvent?.category ?? 'meeting')
+  const [coverImage, setCoverImage] = useState(existingEvent?.coverImage ?? '')
+  const [imagePreview, setImagePreview] = useState(existingEvent?.coverImage ?? '')
 
   useEffect(() => {
     setTitle(existingEvent?.title ?? '')
     setDescription(existingEvent?.description ?? '')
-    setDate(existingEvent?.date ?? '')
-    setTime(existingEvent?.time ?? '')
-    setLocation(existingEvent?.location ?? '')
-    setType(existingEvent?.type ?? 'lecture')
-    setImage(existingEvent?.image ?? '')
-    setImagePreview(existingEvent?.image ?? '')
-    setRegistrationUrl(existingEvent?.registrationUrl ?? '')
+    setStartDate(existingEvent?.startDate ?? '')
+    setVenue(existingEvent?.location?.venue ?? '')
+    setCategory(existingEvent?.category ?? 'meeting')
+    setCoverImage(existingEvent?.coverImage ?? '')
+    setImagePreview(existingEvent?.coverImage ?? '')
   }, [existingEvent])
 
   function handleImageFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -41,7 +37,7 @@ function EventEditor({ existingEvent, onSave, onCancel }: EventEditorProps) {
     const reader = new FileReader()
     reader.onload = () => {
       const result = typeof reader.result === 'string' ? reader.result : ''
-      setImage(result)
+      setCoverImage(result)
       setImagePreview(result)
     }
     reader.readAsDataURL(file)
@@ -52,12 +48,10 @@ function EventEditor({ existingEvent, onSave, onCancel }: EventEditorProps) {
     onSave({
       title,
       description,
-      date,
-      time,
-      location,
-      type,
-      image: image || undefined,
-      registrationUrl: registrationUrl || undefined,
+      startDate,
+      location: { venue: venue || undefined },
+      category,
+      coverImage: coverImage || undefined,
     })
   }
 
@@ -93,25 +87,17 @@ function EventEditor({ existingEvent, onSave, onCancel }: EventEditorProps) {
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' } as React.CSSProperties}>
-        <Input
-          label="Date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-        <Input
-          label="Time"
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-        />
-      </div>
+      <Input
+        label="Date"
+        type="date"
+        value={startDate}
+        onChange={(e) => setStartDate(e.target.value)}
+      />
 
       <Input
         label="Location"
-        value={location}
-        onChange={(e) => setLocation(e.target.value)}
+        value={venue}
+        onChange={(e) => setVenue(e.target.value)}
         placeholder="Event venue"
       />
 
@@ -119,16 +105,16 @@ function EventEditor({ existingEvent, onSave, onCancel }: EventEditorProps) {
         <label style={{
           display: 'block', marginBottom: '4px', fontSize: '14px',
           fontWeight: 600, color: 'var(--text-heading)',
-        } as React.CSSProperties}>Type</label>
+        } as React.CSSProperties}>Category</label>
         <select
-          id="event-type"
-          value={type}
-          onChange={(e) => setType(e.target.value as EventItem['type'])}
+          id="event-category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value as EventItem['category'])}
           style={fieldStyle}
         >
-          {EVENT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t.charAt(0).toUpperCase() + t.slice(1)}
+          {EVENT_CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c.charAt(0).toUpperCase() + c.slice(1)}
             </option>
           ))}
         </select>
@@ -152,9 +138,9 @@ function EventEditor({ existingEvent, onSave, onCancel }: EventEditorProps) {
 
         <Input
           label="Or image URL"
-          value={image}
+          value={coverImage}
           onChange={(e) => {
-            setImage(e.target.value)
+            setCoverImage(e.target.value)
             setImagePreview(e.target.value)
           }}
           placeholder="https://example.com/image.jpg"
@@ -172,13 +158,6 @@ function EventEditor({ existingEvent, onSave, onCancel }: EventEditorProps) {
           </div>
         </div>
       </div>
-
-      <Input
-        label="Registration URL (optional)"
-        value={registrationUrl}
-        onChange={(e) => setRegistrationUrl(e.target.value)}
-        placeholder="https://example.com/register"
-      />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '8px' } as React.CSSProperties}>
         <Button type="submit" variant="primary">
