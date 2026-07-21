@@ -1,6 +1,7 @@
 import { useAuth as useAuthContext } from '@/context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants'
+import { useAuthStore } from '@/store/authStore'
 import type { LoginPayload, RegisterPayload } from '@/types'
 
 function useAuth() {
@@ -9,7 +10,8 @@ function useAuth() {
 
   async function login(payload: LoginPayload) {
     await ctxLogin(payload)
-    if (user?.role === 'admin') {
+    const updatedUser = useAuthStore.getState().user
+    if (updatedUser?.role === 'admin' || updatedUser?.role === 'superadmin') {
       navigate(ROUTES.ADMIN.DASHBOARD, { replace: true })
     } else {
       navigate(ROUTES.HOME, { replace: true })

@@ -8,6 +8,12 @@ import type {
   EventItem,
   DigitalIdRequest,
   ContactMessage,
+  Donation,
+  Executive,
+  GalleryPhoto,
+  Lodge,
+  WebContent,
+  ProgramItem,
 } from '@/types'
 
 // ──────────────────────────── UPLOADS ────────────────────────────
@@ -316,4 +322,102 @@ export const adminUsersApi = {
 
   reactivate: (id: string) =>
     client.patch<void>(`/admin-users/${id}/reactivate`),
+}
+
+// ──────────────────────────── DONATIONS ────────────────────────────
+
+export const donationsApi = {
+  getAll: (params?: { page?: number; limit?: number; status?: string }) => {
+    const q = new URLSearchParams()
+    if (params?.page) q.set('page', String(params.page))
+    if (params?.limit) q.set('limit', String(params.limit))
+    if (params?.status) q.set('status', params.status)
+    const qs = q.toString()
+    return client.get<Donation[]>(`/donations${qs ? `?${qs}` : ''}`)
+  },
+
+  create: (data: { donor: string; amount: string; amountValue?: number; purpose: string }) =>
+    client.post<Donation>('/donations', data),
+
+  update: (id: string, data: Partial<Donation>) =>
+    client.patch<Donation>(`/donations/${id}`, data),
+
+  delete: (id: string) =>
+    client.delete<void>(`/donations/${id}`),
+
+  getStats: () =>
+    client.get<{ totalDonations: number; raisedYear: number; raisedMonth: number }>('/donations/stats'),
+}
+
+// ──────────────────────────── EXECUTIVES ────────────────────────────
+
+export const executivesApi = {
+  getAll: () =>
+    client.get<Executive[]>('/executives'),
+
+  create: (data: { name: string; role: string; photo: string; state: string }) =>
+    client.post<Executive>('/executives', data),
+
+  update: (id: string, data: Partial<Executive>) =>
+    client.put<Executive>(`/executives/${id}`, data),
+
+  delete: (id: string) =>
+    client.delete<void>(`/executives/${id}`),
+}
+
+// ──────────────────────────── GALLERY ────────────────────────────
+
+export const galleryApi = {
+  getAll: () =>
+    client.get<GalleryPhoto[]>('/gallery'),
+
+  create: (data: { src: string; caption: string; span?: string }) =>
+    client.post<GalleryPhoto>('/gallery', data),
+
+  update: (id: string, data: Partial<GalleryPhoto>) =>
+    client.put<GalleryPhoto>(`/gallery/${id}`, data),
+
+  delete: (id: string) =>
+    client.delete<void>(`/gallery/${id}`),
+
+  upload: (formData: FormData) =>
+    client.post<{ url: string; publicId: string }>('/gallery/upload', formData),
+}
+
+// ──────────────────────────── LODGES ────────────────────────────
+
+export const lodgesApi = {
+  getAll: (params?: { status?: string; state?: string }) => {
+    const q = new URLSearchParams()
+    if (params?.status) q.set('status', params.status)
+    if (params?.state) q.set('state', params.state)
+    const qs = q.toString()
+    return client.get<Lodge[]>(`/lodges${qs ? `?${qs}` : ''}`)
+  },
+
+  create: (data: { name: string; photo: string; address: string; state: string; capacity: number; status: string; coordinator: string; phone: string; map: string }) =>
+    client.post<Lodge>('/lodges', data),
+
+  update: (id: string, data: Partial<Lodge>) =>
+    client.put<Lodge>(`/lodges/${id}`, data),
+
+  delete: (id: string) =>
+    client.delete<void>(`/lodges/${id}`),
+}
+
+// ──────────────────────────── WEB CONTENT ────────────────────────────
+
+export const webContentApi = {
+  get: () =>
+    client.get<WebContent>('/webcontent'),
+
+  update: (data: { headline?: string; sections?: { label: string; visible: boolean }[] }) =>
+    client.put<WebContent>('/webcontent', data),
+}
+
+// ──────────────────────────── PROGRAMS ────────────────────────────
+
+export const programsApi = {
+  getAll: () =>
+    client.get<ProgramItem[]>('/programs'),
 }

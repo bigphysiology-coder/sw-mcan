@@ -1,30 +1,28 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SectionHeading } from '@/components/ui/SectionHeading';
-import { Eyebrow } from '@/components/ui/Eyebrow';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ProgramCard } from '@/components/ui/ProgramCard';
 import { Reveal } from '@/components/ui/Reveal';
 import { JoinModal } from '@/components/ui/JoinModal';
+import { usePrograms } from '@/features/programs/hooks/usePrograms';
+import type { ProgramItem } from '@/types';
 
-const ALL = [
-  { cat: 'Events', badge: 'Upcoming', badgeTone: 'green' as const, image: '/photos/corps-group.jpg', meta: '21 Dec 2024 \u00b7 Google Meet', title: 'Southwest Lecture: Islamic perspective on the festive period', description: 'A guided session with Ustadh Abdulfatah Akanni Adigun, open to all corps members.' },
-  { cat: 'Welfare', badge: 'Ramadan', badgeTone: 'gold' as const, image: '/photos/correctional-visit.jpg', meta: 'Annual \u00b7 all six states', title: 'Feed a Soul — Ramadan relief project', description: 'Providing iftar meals and relief packages to fasting Muslims and visiting correctional centres.' },
-  { cat: 'Education', badge: 'Open', badgeTone: 'neutral' as const, image: '/photos/lecture-hall.jpg', meta: 'Rolling admission', title: 'MCAN Online Madrasah', description: "Qur'an recitation, memorization, Tajweed, Arabic and Islamic studies — beginner to advanced." },
-  { cat: 'Welfare', badge: 'Appeal', badgeTone: 'gold' as const, image: '/photos/mcan-bus.jpg', meta: 'Zonal logistics', title: 'Ease MCAN Logistics', description: 'Reducing interstate transport costs so members can attend regional programs.' },
-  { cat: 'Events', badge: 'Annual', badgeTone: 'green' as const, image: '/photos/award-presentation.jpg', meta: 'Zonal HQ', title: 'Southwest Zonal Convention', description: 'Swearing-in of regional executives, leadership training and Islamic lectures.' },
-  { cat: 'Education', badge: 'Weekly', badgeTone: 'neutral' as const, image: '/photos/mosque-block.jpg', meta: 'Every chapter', title: 'Halaqah & Tafsir circles', description: 'Recurring study circles strengthening knowledge and brotherhood across chapters.' },
-];
+const IMAGES = ['/photos/corps-group.jpg', '/photos/correctional-visit.jpg', '/photos/lecture-hall.jpg', '/photos/mcan-bus.jpg', '/photos/award-presentation.jpg', '/photos/mosque-block.jpg', '/photos/mosque-dome.jpg'];
+const BADGES = ['Upcoming', 'Annual', 'Open', 'Weekly', 'Ongoing', 'Phase 2', 'Funded', 'Outreach', 'Education', 'Welfare'];
+const BADGE_TONES = ['green', 'gold', 'neutral'] as const;
 
-const PROJECTS = [
-  { badge: 'Ongoing', badgeTone: 'gold' as const, image: '/photos/mosque-dome.jpg', meta: 'Zonal HQ', title: "Central Mosque & Da'wah Centre", description: 'A permanent zonal mosque and learning centre under construction for the Southwest community.' },
-  { badge: 'Phase 2', badgeTone: 'green' as const, image: '/photos/mosque-block.jpg', meta: 'Chapter project', title: 'Chapter Mosque Development', description: 'Block-by-block construction of state-chapter mosques for resident corps members.' },
-  { badge: 'Funded', badgeTone: 'neutral' as const, image: '/photos/mcan-bus.jpg', meta: 'Logistics', title: 'MCAN Transit Bus', description: 'A dedicated bus easing interstate transport for members attending zonal programs.' },
-  { badge: 'Outreach', badgeTone: 'gold' as const, image: '/photos/correctional-visit.jpg', meta: 'All states', title: "Correctional Centre Da'wah", description: 'Regular visits, relief and spiritual support to inmates across the zone.' },
-  { badge: 'Education', badgeTone: 'green' as const, image: '/photos/lecture-hall.jpg', meta: 'Year-round', title: 'Learning & Halaqah Spaces', description: 'Equipping study spaces and the Online Madrasah so members keep growing in knowledge.' },
-  { badge: 'Welfare', badgeTone: 'neutral' as const, image: '/photos/corps-group.jpg', meta: 'Every batch', title: 'Member Settling-in Support', description: 'Accommodation guidance and welcome welfare for newly-posted corps members.' },
-];
+function toDisplay(item: ProgramItem, index: number) {
+  return {
+    title: item.title,
+    description: item.description,
+    image: item.image || IMAGES[index % IMAGES.length],
+    badge: item.category || BADGES[index % BADGES.length],
+    badgeTone: BADGE_TONES[index % BADGE_TONES.length],
+    meta: item.link || '',
+    cat: item.category || 'Events',
+  }
+}
 
 interface ProgramsViewProps {
   about?: boolean;
@@ -38,7 +36,8 @@ export function ProgramsView({ about, news, projects, allowJoinModal = !news && 
   const [joinOpen, setJoinOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q')?.toLowerCase().trim() || '';
-  const cats = ['All', 'Events', 'Welfare', 'Education'];
+  const { programs, isLoading } = usePrograms(projects ? 'project' : undefined);
+  const cats = ['All', ...new Set(programs.map((p) => p.category || 'Events'))];
 
   const p = about
     ? { eyebrow: 'About MCAN Southwest', title: 'A regional body serving Muslim corps members', intro: 'MCAN Southwest coordinates welfare, spiritual development and community outreach across the six Southwest states — guided by adherence to the pristine teachings of Islam in all affairs of life.' }
@@ -48,9 +47,10 @@ export function ProgramsView({ about, news, projects, allowJoinModal = !news && 
     ? { eyebrow: 'Projects', title: 'Building lasting community assets', intro: 'Mosques, transport, learning spaces and outreach — the projects MCAN Southwest is building for members and the wider community.' }
     : { eyebrow: 'Programs & activities', title: 'Programs across the Southwest zone', intro: 'From the Zonal Convention to weekly halaqah and the Online Madrasah — here is what we run.' };
 
-  const showFilters = !about && !news && !projects;
-  const list = projects ? PROJECTS : (() => {
-    let items = filter === 'All' ? ALL : ALL.filter((x) => x.cat === filter);
+  const showFilters = !about && !news && !projects && !isLoading;
+  const list = (() => {
+    let items = programs.map(toDisplay);
+    if (filter !== 'All') items = items.filter((x) => x.cat === filter);
     if (searchQuery) {
       items = items.filter((x) =>
         x.title.toLowerCase().includes(searchQuery) ||

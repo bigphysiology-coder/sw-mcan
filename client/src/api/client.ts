@@ -27,9 +27,13 @@ let refreshQueue: Array<{
 }> = []
 
 async function refreshToken(): Promise<string> {
+  const currentToken = getToken()
   const res = await fetch(`${BASE_URL}/auth/refresh`, {
     method: 'POST',
     credentials: 'include',
+    headers: currentToken
+      ? { Authorization: `Bearer ${currentToken}` }
+      : undefined,
   })
 
   if (!res.ok) {
@@ -49,7 +53,8 @@ async function refreshToken(): Promise<string> {
 }
 
 function getToken(): string | null {
-  return localStorage.getItem(AUTH_TOKEN_KEY)
+  const token = localStorage.getItem(AUTH_TOKEN_KEY)
+  return token && token !== 'undefined' ? token : null
 }
 
 async function request<T>(
@@ -86,7 +91,9 @@ async function request<T>(
     ...options,
   })
 
-  if (res.status === 401) {
+  const isAuthEndpoint = path === '/auth/login' || path === '/auth/register' || path === '/auth/refresh'
+
+  if (res.status === 401 && !isAuthEndpoint) {
     if (!isRefreshing) {
       isRefreshing = true
       try {
@@ -154,7 +161,11 @@ async function request<T>(
 
   if (res.status === 204) return undefined as T
 
-  return res.json() as Promise<T>
+  const json: unknown = await res.json()
+  if (json && typeof json === 'object' && (json as Record<string, unknown>).success === true && 'data' in (json as Record<string, unknown>)) {
+    return (json as Record<string, unknown>).data as T
+  }
+  return json as T
 }
 
 export const client = {

@@ -167,6 +167,16 @@ export interface WebContent {
   sections: WebContentSection[]
 }
 
+export interface ProgramItem {
+  id: string
+  title: string
+  description: string
+  category?: string
+  type: 'program' | 'project'
+  image?: string
+  link?: string
+}
+
 export interface ContactMessage {
   id: string
   firstName: string

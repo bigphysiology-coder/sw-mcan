@@ -20,10 +20,15 @@ function loadPersistedUser(): User | null {
   }
 }
 
+function getPersistedToken(): string | null {
+  const t = localStorage.getItem(AUTH_TOKEN_KEY)
+  return t && t !== 'undefined' ? t : null
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: loadPersistedUser(),
-  token: localStorage.getItem(AUTH_TOKEN_KEY),
-  isAuthenticated: !!localStorage.getItem(AUTH_TOKEN_KEY),
+  token: getPersistedToken(),
+  isAuthenticated: !!getPersistedToken(),
   setAuth: (user, token) => {
     localStorage.setItem(AUTH_TOKEN_KEY, token)
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))

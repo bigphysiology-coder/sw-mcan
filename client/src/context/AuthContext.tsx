@@ -40,14 +40,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (payload: LoginPayload) => {
     const res = await authApi.login(payload)
-    localStorage.setItem(AUTH_TOKEN_KEY, res.accessToken)
-    setAuth(res.user, res.accessToken)
+    const accessToken = res.accessToken ?? (res as unknown as { token: string }).token
+    localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
+    setAuth(res.user, accessToken)
   }, [setAuth])
 
   const register = useCallback(async (payload: RegisterPayload) => {
     const res = await authApi.register(payload)
-    localStorage.setItem(AUTH_TOKEN_KEY, res.accessToken)
-    setAuth(res.user, res.accessToken)
+    const accessToken = res.accessToken ?? (res as unknown as { token: string }).token
+    localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
+    setAuth(res.user, accessToken)
   }, [setAuth])
 
   const logout = useCallback(async () => {

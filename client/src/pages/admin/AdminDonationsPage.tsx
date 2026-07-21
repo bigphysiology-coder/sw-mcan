@@ -10,8 +10,8 @@ export default function AdminDonationsPage() {
 
   const raisedYear = stats ? formatNaira(stats.raisedYear) : '—'
   const raisedMonth = stats ? formatNaira(stats.raisedMonth) : '—'
-  const pendingReview = stats ? String(stats.pendingReview) : '—'
-  const monthlyPartners = stats ? String(stats.monthlyPartners) : '—'
+  const pendingReview = String(donations.filter((d) => d.status === 'Pending').length)
+  const monthlyPartners = '—'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
