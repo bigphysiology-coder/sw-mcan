@@ -1,6 +1,7 @@
 import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from '@/constants'
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const raw = import.meta.env.VITE_API_URL
+const BASE_URL = raw ? raw.replace(/\/+$/, '') + '/api' : '/api'
 
 interface ApiError {
   message: string
