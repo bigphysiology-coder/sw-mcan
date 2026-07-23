@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
 
-# Next.js build output
-.next/
+# Build output
+dist
+dist-ssr
 
 # Environment
 .env
@@ -21,3 +22,12 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
