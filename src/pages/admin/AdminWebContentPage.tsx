@@ -87,7 +87,7 @@ export default function AdminWebContentPage() {
       i === index ? { ...s, visible: !s.visible } : s
     )
     try {
-      await updateContent({ sections: updated })
+      await updateContent({ ...content, sections: updated })
       setSuccess(`${updated[index].label} is now ${updated[index].visible ? 'visible' : 'hidden'}`)
       setTimeout(() => setSuccess(null), 3000)
     } catch (err) {
