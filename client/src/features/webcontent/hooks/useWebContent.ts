@@ -12,6 +12,11 @@ function useWebContent() {
     queryFn: () => webcontentApi.getWebContent(),
   })
 
+  const createMutation = useMutation<WebContent, Error, Partial<WebContent>>({
+    mutationFn: (data) => webcontentApi.createWebContent(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+  })
+
   const updateMutation = useMutation<WebContent, Error, Partial<WebContent>>({
     mutationFn: (data) => webcontentApi.updateWebContent(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
@@ -21,6 +26,8 @@ function useWebContent() {
     content,
     isLoading,
     error,
+    createContent: createMutation.mutateAsync,
+    isCreating: createMutation.isPending,
     updateContent: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
   }

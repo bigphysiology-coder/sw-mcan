@@ -2,6 +2,7 @@ import { useState, type FormEvent, useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { STATES } from '@/constants'
 import { useDigitalId } from '@/features/digital-id/hooks/useDigitalId'
+import { uploadApi } from '@/api'
 
 interface IdCardRequestProps {
   onSuccess?: () => void
@@ -23,6 +24,8 @@ function IdCardRequest({ onSuccess }: IdCardRequestProps) {
   const [validityEndYear, setValidityEndYear] = useState('')
   const [phone, setPhone] = useState('')
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const inputStyle = {
     width: '100%', padding: '12px 16px',
@@ -55,12 +58,36 @@ function IdCardRequest({ onSuccess }: IdCardRequestProps) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    setError(null)
     if (!photoPreview) return
+    if (!fullName || !nyscCallUpNumber || !state || !phone) {
+      setError('Please fill in all required fields')
+      return
+    }
 
-    await submitRequest({
-      passportPhoto: photoPreview,
-    })
-    onSuccess?.()
+    try {
+      setIsUploading(true)
+      const formData = new FormData()
+      const blob = await fetch(photoPreview).then(r => r.blob())
+      formData.append('file', blob, 'passport.jpg')
+      const { url } = await uploadApi.uploadImage(formData)
+      setIsUploading(false)
+
+      await submitRequest({
+        fullName,
+        nyscCallUpNumber,
+        state,
+        phone,
+        passportPhoto: url,
+        postHeld: postHeld || undefined,
+        validityBegin: validityBeginMonth && validityBeginYear ? `${validityBeginMonth} ${validityBeginYear}` : undefined,
+        validityEnd: validityEndMonth && validityEndYear ? `${validityEndMonth} ${validityEndYear}` : undefined,
+      })
+      onSuccess?.()
+    } catch (err) {
+      setIsUploading(false)
+      setError(err instanceof Error ? err.message : 'Failed to submit request')
+    }
   }
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -248,9 +275,14 @@ function IdCardRequest({ onSuccess }: IdCardRequestProps) {
           </div>
 
 
+          {error && (
+            <p style={{ color: '#DC2626', fontSize: '14px', marginBottom: '12px', textAlign: 'center', fontFamily: 'var(--font-body)' }}>
+              {error}
+            </p>
+          )}
 
-          <Button type="submit" variant="primary" size="lg" style={{ width: '100%' } as React.CSSProperties}>
-            {isLoading ? 'Submitting...' : 'Submit Request'}
+          <Button type="submit" variant="primary" size="lg" style={{ width: '100%' } as React.CSSProperties} disabled={isUploading || isLoading}>
+            {isUploading ? 'Uploading photo...' : isLoading ? 'Submitting...' : 'Submit Request'}
           </Button>
         </form>
       </div>

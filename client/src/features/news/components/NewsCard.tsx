@@ -21,7 +21,7 @@ function NewsCard({ news }: NewsCardProps) {
       )}
 
       <div className="p-5">
-        {news.tags.length > 0 && (
+        {news.tags && news.tags.length > 0 && (
           <div className="mb-3">
             <Badge tone="neutral">{news.tags[0]}</Badge>
           </div>

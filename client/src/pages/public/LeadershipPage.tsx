@@ -3,8 +3,11 @@ import { SectionHeading } from '@/components/ui/SectionHeading';
 import { LeaderCard } from '@/components/ui/LeaderCard';
 import { Reveal } from '@/components/ui/Reveal';
 import { useExecutives } from '@/features/executives/hooks/useExecutives';
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility';
 
 export default function Leadership() {
+  const visible = useSectionVisible('Leadership');
+  if (!visible) return <SectionHidden />;
   const { executives, isLoading } = useExecutives();
 
   if (isLoading) return <div style={{ padding: '96px 0', textAlign: 'center', color: 'var(--text-muted)' }}>Loading leadership…</div>;

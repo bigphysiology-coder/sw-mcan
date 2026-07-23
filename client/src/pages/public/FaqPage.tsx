@@ -3,8 +3,8 @@ import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
-import { JoinModal } from '@/components/ui/JoinModal';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility';
 
 const FAQS = [
   {
@@ -39,7 +39,8 @@ function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
-function FAQItem({ item, open, onToggle, onJoin }: { item: typeof FAQS[0]; open: boolean; onToggle: () => void; onJoin: () => void }) {
+function FAQItem({ item, open, onToggle }: { item: typeof FAQS[0]; open: boolean; onToggle: () => void }) {
+  const navigate = useNavigate();
   const bodyRef = useRef<HTMLDivElement>(null);
   const [h, setH] = useState(0);
   useLayoutEffect(() => { if (bodyRef.current) setH(bodyRef.current.scrollHeight); }, [open]);
@@ -69,7 +70,7 @@ function FAQItem({ item, open, onToggle, onJoin }: { item: typeof FAQS[0]; open:
             <p key={i} style={{ margin: i === 0 ? '0 0 12px' : '0 0 12px', fontSize: '15.5px', lineHeight: 1.7, color: 'var(--text-body)' }}>{p}</p>
           ))}
           {item.cta && (
-            <button onClick={onJoin} style={{
+            <button onClick={() => navigate('/signup')} style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '4px',
               background: 'var(--green-primary)', color: '#fff', border: 'none', cursor: 'pointer',
               padding: '11px 20px', borderRadius: 'var(--radius-button)', fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: '15px',
@@ -85,8 +86,10 @@ function FAQItem({ item, open, onToggle, onJoin }: { item: typeof FAQS[0]; open:
 }
 
 export default function Faq() {
+  const visible = useSectionVisible('FAQ')
+  if (!visible) return <SectionHidden />
+  const navigate = useNavigate();
   const [open, setOpen] = useState(0);
-  const [joinOpen, setJoinOpen] = useState(false);
   return (
     <div>
       <section style={{ background: 'var(--white)', borderBottom: '1px solid var(--border-subtle)' }}>
@@ -105,7 +108,7 @@ export default function Faq() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {FAQS.map((f, i) => (
             <Reveal key={f.q} delay={i * 0.06}>
-              <FAQItem item={f} open={open === i} onToggle={() => setOpen(open === i ? -1 : i)} onJoin={() => setJoinOpen(true)} />
+              <FAQItem item={f} open={open === i} onToggle={() => setOpen(open === i ? -1 : i)} />
             </Reveal>
           ))}
         </div>
@@ -119,7 +122,7 @@ export default function Faq() {
               The zonal secretariat is one message away
             </h2>
             <div style={{ display: 'flex', gap: '14px', marginTop: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Button variant="gold" size="lg" onClick={() => setJoinOpen(true)}>Join MCAN</Button>
+              <Button variant="gold" size="lg" onClick={() => navigate('/signup')}>Join MCAN</Button>
               <Link to="/contact">
                 <Button variant="ghost" size="lg" style={{ color: '#fff', border: '1.5px solid rgba(255,255,255,0.4)' }}>Contact us</Button>
               </Link>
@@ -127,8 +130,6 @@ export default function Faq() {
           </Reveal>
         </div>
       </section>
-
-      {joinOpen && <JoinModal onClose={() => setJoinOpen(false)} />}
     </div>
   );
 }

@@ -9,9 +9,7 @@ export default function AdminGalleryPage() {
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || [])
     for (const f of files) {
-      const url = URL.createObjectURL(f)
-      await uploadPhoto({ src: url, caption: caption || f.name })
-      URL.revokeObjectURL(url)
+      await uploadPhoto({ file: f, caption: caption || f.name })
     }
     setCaption('')
     if (inputRef.current) inputRef.current.value = ''

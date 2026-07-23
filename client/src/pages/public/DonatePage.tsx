@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { CountUp } from '@/components/ui/CountUp';
 import { Reveal } from '@/components/ui/Reveal';
-import { JoinModal } from '@/components/ui/JoinModal';
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility';
+
 
 const TIERS = [
   { amount: '₦5,000', title: 'Feed a soul', desc: 'Provides iftar meals for fasting Muslims during Ramadan.', tone: 'green' as const },
@@ -46,9 +48,11 @@ function CopyRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function Donate() {
+  const visible = useSectionVisible('Donate')
+  if (!visible) return <SectionHidden />
+  const navigate = useNavigate();
   const [amount, setAmount] = useState('₦25,000');
   const [showAccount, setShowAccount] = useState(false);
-  const [joinOpen, setJoinOpen] = useState(false);
 
   return (
     <div>
@@ -103,7 +107,7 @@ export default function Donate() {
         <p style={{ fontSize: '16px', color: 'var(--text-body)', margin: 0 }}>You selected <strong>{amount}</strong>. Click below for our account details.</p>
         <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'center' }}>
           <Button variant="primary" size="lg" onClick={() => setShowAccount(true)}>Donate {amount}</Button>
-          <Button variant="secondary" size="lg" onClick={() => setJoinOpen(true)}>Become a monthly partner</Button>
+          <Button variant="secondary" size="lg" onClick={() => navigate('/signup')}>Become a monthly partner</Button>
         </div>
       </section>
 
@@ -139,8 +143,6 @@ export default function Donate() {
           </div>
         </div>
       )}
-
-      {joinOpen && <JoinModal onClose={() => setJoinOpen(false)} />}
     </div>
   );
 }

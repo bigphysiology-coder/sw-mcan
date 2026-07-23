@@ -15,6 +15,14 @@ export default defineConfig({
       '/api': {
         target: 'https://mcan-backend.onrender.com',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
+            // Forward the Authorization header if present
+            if (req.headers['authorization']) {
+              proxyReq.setHeader('authorization', req.headers['authorization'] as string);
+            }
+          });
+        },
       },
     },
   },

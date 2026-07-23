@@ -18,6 +18,7 @@ export const ROUTES = {
   DIGITAL_ID: '/digital-id',
   LOGIN: '/login',
   SIGNUP: '/signup',
+  WELCOME: '/welcome',
   ADMIN: {
     DASHBOARD: '/admin',
     MEMBERS: '/admin/members',

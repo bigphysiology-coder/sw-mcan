@@ -14,6 +14,7 @@ const ContactPage = lazy(() => import('@/pages/public/ContactPage'))
 const DigitalIdPage = lazy(() => import('@/pages/public/DigitalIdPage'))
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const SignupPage = lazy(() => import('@/pages/auth/SignupPage'))
+const WelcomePage = lazy(() => import('@/pages/auth/WelcomePage'))
 
 function SiteRoutes() {
   return (
@@ -26,7 +27,8 @@ function SiteRoutes() {
       <Route path={ROUTES.CONTACT} element={<Suspense fallback={<Loader fullScreen />}><ContactPage /></Suspense>} />
       <Route path={ROUTES.DIGITAL_ID} element={<ProtectedRoute><Suspense fallback={<Loader fullScreen />}><DigitalIdPage /></Suspense></ProtectedRoute>} />
       <Route path={ROUTES.LOGIN} element={<PublicRoute><Suspense fallback={<Loader fullScreen />}><LoginPage /></Suspense></PublicRoute>} />
-      <Route path={ROUTES.SIGNUP} element={<PublicRoute><Suspense fallback={<Loader fullScreen />}><SignupPage /></Suspense></PublicRoute>} />
+      <Route path={ROUTES.SIGNUP} element={<Suspense fallback={<Loader fullScreen />}><SignupPage /></Suspense>} />
+      <Route path={ROUTES.WELCOME} element={<Suspense fallback={<Loader fullScreen />}><WelcomePage /></Suspense>} />
     </Routes>
   )
 }

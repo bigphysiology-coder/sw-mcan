@@ -18,11 +18,10 @@ export const galleryApi = {
     return api.delete(id)
   },
 
-  async uploadPhoto(_src: string, _caption: string): Promise<GalleryPhoto> {
+  async uploadPhoto(file: File, caption: string): Promise<GalleryPhoto> {
     const formData = new FormData()
-    formData.append('src', _src)
-    formData.append('caption', _caption)
+    formData.append('file', file)
     const { url } = await api.upload(formData)
-    return api.create({ src: url, caption: _caption })
+    return api.create({ src: url, caption })
   },
 }

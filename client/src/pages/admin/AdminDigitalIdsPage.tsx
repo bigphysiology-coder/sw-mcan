@@ -119,40 +119,103 @@ function printCard(req: { fullName: string; state: string; nyscCallUpNumber: str
   win.document.close()
 }
 
+const detailRow = (label: string, value: string) => (
+  <div style={{ display: 'flex', gap: '8px', fontSize: '13px', padding: '4px 0' }}>
+    <span style={{ fontWeight: 600, color: '#374151', minWidth: '110px' }}>{label}:</span>
+    <span style={{ color: '#6B7280' }}>{value || '—'}</span>
+  </div>
+)
+
+function ExpandedDetails({ req }: { req: DigitalIdRequest }) {
+  return (
+    <div style={{ padding: '16px 18px', background: '#F9FAFB', borderBottom: '1px solid #F3F4F6' }}>
+      <div style={{ display: 'flex', gap: '20px' }}>
+        <div style={{ flex: 1 }}>
+          {detailRow('Full Name', req.fullName ?? '')}
+          {detailRow('State Code', req.nyscCallUpNumber ?? '')}
+          {detailRow('State Branch', req.state ?? '')}
+          {detailRow('Post Held', req.postHeld ?? '')}
+          {detailRow('Validity Begin', req.validityBegin ?? '')}
+          {detailRow('Validity End', req.validityEnd ?? '')}
+          {detailRow('Phone', req.phone ?? '')}
+          {detailRow('Submitted', formatDate(req.createdAt))}
+        </div>
+        {req.photo && (
+          <div style={{ width: '72px', height: '72px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #E5E7EB' }}>
+            <img src={req.photo} alt="passport" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Avatar({ name }: { name: string }) {
+  return (
+    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--admin-brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, color: 'var(--admin-brand)', flexShrink: 0 }}>
+      {(name ?? '?').split(' ').map((s) => s[0]).join('').slice(0, 2)}
+    </div>
+  )
+}
+
 export default function AdminDigitalIdsPage() {
-  const { requests, isLoading, approveRequest, rejectRequest, deleteRequest, isApproving, isRejecting, isDeleting } = useDigitalIdRequests()
+  const { requests, isLoading, approveRequest, rejectRequest, deleteRequest, isApproving, isRejecting, isDeleting, downloadImage, downloadPdf } = useDigitalIdRequests()
   const user = useAuthStore((s) => s.user)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [rejectModal, setRejectModal] = useState<{ id: string; name: string } | null>(null)
-  const [rejectReason, setRejectReason] = useState('')
+  const [revokeModal, setRevokeModal] = useState<{ id: string; name: string } | null>(null)
+  const [modalReason, setModalReason] = useState('')
   const [previewCard, setPreviewCard] = useState<DigitalIdRequest | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   async function handleApprove(id: string) {
     await approveRequest(id)
   }
 
   async function handleReject(id: string) {
-    await rejectRequest({ id, reason: rejectReason || undefined })
+    await rejectRequest({ id, reason: modalReason || undefined })
     setRejectModal(null)
-    setRejectReason('')
+    setModalReason('')
   }
 
-  async function handleDelete(id: string) {
+  async function handleRevoke(id: string) {
     await deleteRequest(id)
-    setDeleteConfirm(null)
+    setRevokeModal(null)
+    setModalReason('')
+  }
+
+  function downloadAsImage(req: DigitalIdRequest) {
+    downloadImage(req.id, req.fullName ?? 'ID_Card')
+  }
+
+  function downloadAsPdf(req: DigitalIdRequest) {
+    downloadPdf(req.id, req.fullName ?? 'ID_Card')
   }
 
   const pending = requests.filter((r) => r.status === 'pending')
   const approved = requests.filter((r) => r.status === 'approved')
   const rejected = requests.filter((r) => r.status === 'rejected')
 
-  const detailRow = (label: string, value: string) => (
-    <div style={{ display: 'flex', gap: '8px', fontSize: '13px', padding: '4px 0' }}>
-      <span style={{ fontWeight: 600, color: '#374151', minWidth: '110px' }}>{label}:</span>
-      <span style={{ color: '#6B7280' }}>{value || '—'}</span>
-    </div>
-  )
+  function ListItem({ req }: { req: DigitalIdRequest }) {
+    const isExpanded = expandedId === req.id
+    return (
+      <div>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 18px', borderBottom: isExpanded ? '1px solid #E5E7EB' : '1px solid #F3F4F6', cursor: 'pointer' }}
+          onClick={() => setExpandedId(isExpanded ? null : req.id)}
+        >
+          <Avatar name={req.fullName ?? ''} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontWeight: 600, color: '#1F2937', margin: 0, fontSize: '14px' }}>{req.fullName}</p>
+            <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '2px', margin: '2px 0 0 0' }}>
+              {req.nyscCallUpNumber} &middot; {req.state}
+            </p>
+          </div>
+          <svg style={{ width: '16px', height: '16px', color: '#9CA3AF', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+        </div>
+        {isExpanded && <ExpandedDetails req={req} />}
+      </div>
+    )
+  }
 
   if (isLoading) return <div style={{ padding: '40px', textAlign: 'center', color: '#9CA3AF' }}>Loading MCAN Southwest ID requests…</div>
 
@@ -191,9 +254,7 @@ export default function AdminDigitalIdsPage() {
             {pending.map((req) => (
               <div key={req.id}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 18px', borderBottom: expandedId === req.id ? '1px solid #E5E7EB' : '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--admin-brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, color: 'var(--admin-brand)', flexShrink: 0 }}>
-                    {(req.fullName ?? '?').split(' ').map((s) => s[0]).join('').slice(0, 2)}
-                  </div>
+                  <Avatar name={req.fullName ?? ''} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontWeight: 600, color: '#1F2937', margin: 0, fontSize: '14px' }}>{req.fullName}</p>
                     <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '2px', margin: '2px 0 0 0' }}>
@@ -220,24 +281,7 @@ export default function AdminDigitalIdsPage() {
                     <svg style={{ width: '16px', height: '16px', color: '#9CA3AF', transition: 'transform 0.2s', transform: expandedId === req.id ? 'rotate(180deg)' : 'rotate(0deg)' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                   </div>
                 </div>
-                {expandedId === req.id && (
-                  <div style={{ padding: '16px 18px', background: '#F9FAFB', borderBottom: '1px solid #F3F4F6' }}>
-                    <div style={{ display: 'flex', gap: '20px' }}>
-                      <div style={{ flex: 1 }}>
-                        {detailRow('Post Held', req.postHeld ?? '')}
-                        {detailRow('Validity Begin', req.validityBegin ?? '')}
-                        {detailRow('Validity End', req.validityEnd ?? '')}
-                        {detailRow('Phone', req.phone ?? '')}
-                        {detailRow('Submitted', formatDate(req.createdAt))}
-                      </div>
-                      {req.photo && (
-                        <div style={{ width: '72px', height: '72px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #E5E7EB' }}>
-                          <img src={req.photo} alt="passport" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {expandedId === req.id && <ExpandedDetails req={req} />}
               </div>
             ))}
           </div>
@@ -246,33 +290,48 @@ export default function AdminDigitalIdsPage() {
 
       {/* Approved list */}
       {approved.length > 0 && (
-        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden', marginBottom: '24px' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid #E5E7EB', fontSize: '16px', fontWeight: 700, color: '#374151', background: '#F9FAFB' }}>Approved</div>
-            {approved.map((req) => (
-            <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#065F46', flexShrink: 0 }}>
-                {(req.fullName ?? '?').split(' ').map((s) => s[0]).join('').slice(0, 2)}
-              </div>
-              <div style={{ flex: 1, fontSize: '14px', color: '#374151', fontWeight: 500 }}>{req.fullName ?? ''}</div>
-              <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{req.nyscCallUpNumber}</span>
-              <button
-                onClick={() => setPreviewCard(req)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#1a4731', color: '#fff', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
-              >
-                <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                View Card
-              </button>
-              {deleteConfirm === req.id ? (
-                <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                  <button onClick={() => handleDelete(req.id)} disabled={isDeleting} style={{ padding: '6px 12px', background: '#DC2626', color: '#fff', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: isDeleting ? 'not-allowed' : 'pointer', opacity: isDeleting ? 0.6 : 1, fontFamily: 'inherit' }}>Confirm</button>
-                  <button onClick={() => setDeleteConfirm(null)} style={{ padding: '6px 12px', background: '#F3F4F6', color: '#374151', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+          {approved.map((req) => (
+            <div key={req.id}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 18px', borderBottom: expandedId === req.id ? '1px solid #E5E7EB' : '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#065F46', flexShrink: 0 }}>
+                  {(req.fullName ?? '?').split(' ').map((s) => s[0]).join('').slice(0, 2)}
                 </div>
-              ) : (
-                <button onClick={() => setDeleteConfirm(req.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#FEF2F2', color: '#DC2626', fontSize: '12px', fontWeight: 600, border: '1px solid #FECACA', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-                  <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  Delete
+                <div style={{ flex: 1, fontSize: '14px', color: '#374151', fontWeight: 500 }}>{req.fullName ?? ''}</div>
+                <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{req.nyscCallUpNumber}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setPreviewCard(req) }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#1a4731', color: '#fff', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+                >
+                  <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  View Card
                 </button>
-              )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); downloadAsImage(req) }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#F3F4F6', color: '#374151', fontSize: '12px', fontWeight: 600, border: '1px solid #D1D5DB', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+                >
+                  <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 11l5 5 5-5M12 4v12" /></svg>
+                  Image
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); downloadAsPdf(req) }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#F3F4F6', color: '#374151', fontSize: '12px', fontWeight: 600, border: '1px solid #D1D5DB', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+                >
+                  <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                  PDF
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setRevokeModal({ id: req.id, name: req.fullName ?? '' }) }}
+                  disabled={isDeleting}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#FEF2F2', color: '#DC2626', fontSize: '12px', fontWeight: 600, border: '1px solid #FECACA', borderRadius: '8px', cursor: isDeleting ? 'not-allowed' : 'pointer', opacity: isDeleting ? 0.6 : 1, fontFamily: 'inherit', flexShrink: 0 }}
+                >
+                  <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Revoke
+                </button>
+                <svg style={{ width: '16px', height: '16px', color: '#9CA3AF', transition: 'transform 0.2s', transform: expandedId === req.id ? 'rotate(180deg)' : 'rotate(0deg)' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              </div>
+              {expandedId === req.id && <ExpandedDetails req={req} />}
             </div>
           ))}
         </div>
@@ -282,22 +341,37 @@ export default function AdminDigitalIdsPage() {
       {rejected.length > 0 && (
         <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden', marginTop: '24px' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid #E5E7EB', fontSize: '16px', fontWeight: 700, color: '#374151', background: '#F9FAFB' }}>Rejected</div>
-            {rejected.map((req) => (
-            <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#991B1B', flexShrink: 0 }}>
-                {(req.fullName ?? '?').split(' ').map((s) => s[0]).join('').slice(0, 2)}
+          {rejected.map((req) => (
+            <div key={req.id}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 18px', borderBottom: expandedId === req.id ? '1px solid #E5E7EB' : '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#991B1B', flexShrink: 0 }}>
+                  {(req.fullName ?? '?').split(' ').map((s) => s[0]).join('').slice(0, 2)}
+                </div>
+                <div style={{ flex: 1, fontSize: '14px', color: '#374151', fontWeight: 500 }}>{req.fullName ?? ''}</div>
+                <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{req.nyscCallUpNumber}</span>
+                {req.reason && <span style={{ fontSize: '12px', color: '#DC2626', fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.reason}</span>}
+                <svg style={{ width: '16px', height: '16px', color: '#9CA3AF', transition: 'transform 0.2s', transform: expandedId === req.id ? 'rotate(180deg)' : 'rotate(0deg)' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
               </div>
-              <div style={{ flex: 1, fontSize: '14px', color: '#374151', fontWeight: 500 }}>{req.fullName ?? ''}</div>
-              <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{req.nyscCallUpNumber}</span>
-              {req.reason && <span style={{ fontSize: '12px', color: '#DC2626', fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.reason}</span>}
-              <button
-                onClick={() => handleDelete(req.id)}
-                disabled={isDeleting}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#DC2626', color: '#fff', fontSize: '12px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: isDeleting ? 'not-allowed' : 'pointer', opacity: isDeleting ? 0.6 : 1, fontFamily: 'inherit', flexShrink: 0 }}
-              >
-                <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                Delete
-              </button>
+              {expandedId === req.id && (
+                <div style={{ padding: '16px 18px', background: '#F9FAFB', borderBottom: '1px solid #F3F4F6' }}>
+                  <div style={{ display: 'flex', gap: '20px' }}>
+                    <div style={{ flex: 1 }}>
+                      {detailRow('Full Name', req.fullName ?? '')}
+                      {detailRow('State Code', req.nyscCallUpNumber ?? '')}
+                      {detailRow('State Branch', req.state ?? '')}
+                      {detailRow('Post Held', req.postHeld ?? '')}
+                      {detailRow('Phone', req.phone ?? '')}
+                      {detailRow('Reason', req.reason ?? '—')}
+                      {detailRow('Submitted', formatDate(req.createdAt))}
+                    </div>
+                    {req.photo && (
+                      <div style={{ width: '72px', height: '72px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #E5E7EB' }}>
+                        <img src={req.photo} alt="passport" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -319,10 +393,18 @@ export default function AdminDigitalIdsPage() {
               postHeld: previewCard.postHeld || '',
               holderSignature: previewCard.holderSignature || '',
             }} />
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button onClick={() => { printCard({ fullName: previewCard.fullName ?? '', state: previewCard.state ?? '', nyscCallUpNumber: previewCard.nyscCallUpNumber ?? '', photo: previewCard.photo, createdAt: previewCard.createdAt, phone: previewCard.phone || user?.phone || '', postHeld: previewCard.postHeld || '', validityBegin: previewCard.validityBegin || '', validityEnd: previewCard.validityEnd || '', holderSignature: previewCard.holderSignature || '' }); setPreviewCard(null); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', background: '#1a4731', color: '#fff', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>
                 <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 9V3h12v6M6 9H4a2 2 0 00-2 2v5a2 2 0 002 2h16a2 2 0 002-2v-5a2 2 0 00-2-2h-2M6 9h12M6 15h12"/></svg>
                 Print Card
+              </button>
+              <button onClick={() => downloadAsImage(previewCard)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', background: '#F3F4F6', color: '#374151', fontSize: '14px', fontWeight: 600, border: '1px solid #D1D5DB', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 11l5 5 5-5M12 4v12" /></svg>
+                Download Image
+              </button>
+              <button onClick={() => downloadAsPdf(previewCard)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', background: '#F3F4F6', color: '#374151', fontSize: '14px', fontWeight: 600, border: '1px solid #D1D5DB', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                Download PDF
               </button>
               <button onClick={() => setPreviewCard(null)} style={{ padding: '10px 24px', background: '#F3F4F6', color: '#374151', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
             </div>
@@ -337,15 +419,36 @@ export default function AdminDigitalIdsPage() {
             <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: '#111827' }}>Reject ID Request</h3>
             <p style={{ fontSize: '14px', color: '#6B7280', margin: '0 0 16px' }}>Reason for rejecting {rejectModal.name}&rsquo;s MCAN Southwest ID request (optional):</p>
             <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
+              value={modalReason}
+              onChange={(e) => setModalReason(e.target.value)}
               rows={3}
               placeholder="Enter reason…"
               style={{ width: '100%', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box', outline: 'none' }}
             />
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <button onClick={() => setRejectModal(null)} style={{ padding: '8px 16px', background: '#F3F4F6', color: '#374151', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={() => { setRejectModal(null); setModalReason('') }} style={{ padding: '8px 16px', background: '#F3F4F6', color: '#374151', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
               <button onClick={() => handleReject(rejectModal.id)} disabled={isRejecting} style={{ padding: '8px 16px', background: '#DC2626', color: '#fff', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: isRejecting ? 'not-allowed' : 'pointer', opacity: isRejecting ? 0.6 : 1, fontFamily: 'inherit' }}>Reject</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Revoke reason modal */}
+      {revokeModal && (
+        <div onClick={() => setRevokeModal(null)} style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: '12px', padding: '24px', maxWidth: '420px', width: '100%', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, color: '#111827' }}>Revoke Approved ID</h3>
+            <p style={{ fontSize: '14px', color: '#6B7280', margin: '0 0 16px' }}>Reason for revoking {revokeModal.name}&rsquo;s approved MCAN Southwest ID:</p>
+            <textarea
+              value={modalReason}
+              onChange={(e) => setModalReason(e.target.value)}
+              rows={3}
+              placeholder="Enter reason for revocation…"
+              style={{ width: '100%', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box', outline: 'none' }}
+            />
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px' }}>
+              <button onClick={() => { setRevokeModal(null); setModalReason('') }} style={{ padding: '8px 16px', background: '#F3F4F6', color: '#374151', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={() => handleRevoke(revokeModal.id)} disabled={isDeleting} style={{ padding: '8px 16px', background: '#DC2626', color: '#fff', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: isDeleting ? 'not-allowed' : 'pointer', opacity: isDeleting ? 0.6 : 1, fontFamily: 'inherit' }}>Revoke</button>
             </div>
           </div>
         </div>

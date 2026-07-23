@@ -1,6 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { uploadApi } from '@/api'
 import type { Executive } from '@/types'
 
 interface ExecutiveEditorProps {
@@ -22,6 +23,7 @@ function ExecutiveEditor({ existingExecutive, onSave, onCancel, isSaving = false
   const [state, setState] = useState(normalizeExecutiveState(existingExecutive?.state))
   const [photo, setPhoto] = useState(existingExecutive?.photo ?? '')
   const [photoPreview, setPhotoPreview] = useState(existingExecutive?.photo ?? '')
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     setName(existingExecutive?.name ?? '')
@@ -35,13 +37,18 @@ function ExecutiveEditor({ existingExecutive, onSave, onCancel, isSaving = false
     const file = e.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : ''
-      setPhoto(result)
-      setPhotoPreview(result)
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const { url } = await uploadApi.uploadImage(formData)
+      setPhoto(url)
+      setPhotoPreview(url)
+    } catch {
+      // upload failed, keep existing photo
+    } finally {
+      setUploading(false)
     }
-    reader.readAsDataURL(file)
   }
 
   function handleSubmit(e: FormEvent) {
@@ -98,12 +105,14 @@ function ExecutiveEditor({ existingExecutive, onSave, onCancel, isSaving = false
           <input
             type="file"
             accept="image/*"
+            disabled={uploading}
             onChange={handleImageFileChange}
             style={{
               width: '100%', border: '1.5px dashed var(--border-default)', borderRadius: 'var(--radius-button)',
               background: 'var(--gray-50)', padding: '12px 16px', fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text-body)',
             }}
           />
+          {uploading && <span style={{ fontSize: '12px', color: 'var(--admin-brand)', marginTop: '4px', display: 'block' }}>Uploading…</span>}
         </div>
 
         <Input
@@ -133,10 +142,10 @@ function ExecutiveEditor({ existingExecutive, onSave, onCancel, isSaving = false
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '4px' }}>
-        <Button type="submit" variant="primary" disabled={isSaving}>
-          {existingExecutive ? 'Update executive' : 'Save executive'}
+        <Button type="submit" variant="primary" disabled={isSaving || uploading}>
+          {uploading ? 'Uploading…' : existingExecutive ? 'Update executive' : 'Save executive'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving || uploading}>
           Cancel
         </Button>
       </div>

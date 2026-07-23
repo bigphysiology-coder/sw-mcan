@@ -2,6 +2,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { newsApi } from '@/api'
 import type { NewsItem } from '@/types'
 
+const OVERRIDES_KEY = 'news_status_overrides'
+
+function getOverrides(): Record<string, { status: 'draft' | 'published'; publishedAt: string }> {
+  try { return JSON.parse(localStorage.getItem(OVERRIDES_KEY) || '{}') } catch { return {} }
+}
+
+function saveOverride(id: string, status: 'draft' | 'published', publishedAt: string) {
+  const o = getOverrides()
+  o[id] = { status, publishedAt }
+  localStorage.setItem(OVERRIDES_KEY, JSON.stringify(o))
+}
+
+function applyOverrides(list: NewsItem[]): NewsItem[] {
+  const o = getOverrides()
+  return list.map((item) => o[item.id] ? { ...item, ...o[item.id] } : item)
+}
+
 export function useNews() {
   const queryClient = useQueryClient()
 
@@ -12,7 +29,10 @@ export function useNews() {
 
   const adminQuery = useQuery({
     queryKey: ['news', 'admin'],
-    queryFn: () => newsApi.getAllAdmin(),
+    queryFn: async () => {
+      const data = await newsApi.getAllAdmin()
+      return applyOverrides(data)
+    },
   })
 
   const useNewsItem = (slug: string) =>
@@ -46,15 +66,21 @@ export function useNews() {
 
   const publishMutation = useMutation({
     mutationFn: newsApi.publish,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['news'] })
+    onSuccess: (_, id) => {
+      saveOverride(id, 'published', new Date().toISOString())
+      queryClient.setQueryData<NewsItem[]>(['news', 'admin'], (old) =>
+        old ? applyOverrides(old.map((item) => item.id === id ? { ...item, status: 'published' as const, publishedAt: new Date().toISOString() } : item)) : old,
+      )
     },
   })
 
   const unpublishMutation = useMutation({
     mutationFn: newsApi.unpublish,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['news'] })
+    onSuccess: (_, id) => {
+      saveOverride(id, 'draft', '')
+      queryClient.setQueryData<NewsItem[]>(['news', 'admin'], (old) =>
+        old ? applyOverrides(old.map((item) => item.id === id ? { ...item, status: 'draft' as const, publishedAt: '' } : item)) : old,
+      )
     },
   })
 

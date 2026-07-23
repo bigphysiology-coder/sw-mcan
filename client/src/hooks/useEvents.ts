@@ -32,7 +32,10 @@ export function useEvents() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<EventItem> }) =>
       eventsApi.update(id, data),
-    onSuccess: () => {
+    onSuccess: (_, { id, data }) => {
+      queryClient.setQueryData<EventItem[]>(['events', 'admin'], (old) =>
+        old?.map((item) => item.id === id ? { ...item, ...data } : item),
+      )
       queryClient.invalidateQueries({ queryKey: ['events'] })
     },
   })
@@ -46,16 +49,20 @@ export function useEvents() {
 
   const publishMutation = useMutation({
     mutationFn: eventsApi.publish,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] })
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<EventItem[]>(['events', 'admin'], (old) =>
+        old?.map((item) => item.id === id ? { ...item, status: 'published' as const } : item),
+      )
     },
   })
 
   const cancelMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
       eventsApi.cancel(id, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] })
+    onSuccess: (_, { id }) => {
+      queryClient.setQueryData<EventItem[]>(['events', 'admin'], (old) =>
+        old?.map((item) => item.id === id ? { ...item, status: 'cancelled' as const } : item),
+      )
     },
   })
 

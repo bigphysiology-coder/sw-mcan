@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '@/constants'
 import { Button } from '@/components/ui/Button'
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility'
 
 const benefits = [
   { icon: '🕌', title: 'Spiritual Growth', description: 'Regular Islamic lectures, tafseer sessions, and group prayers to strengthen your faith.' },
@@ -57,6 +58,8 @@ function Accordion({ q, a }: { q: string; a: string }) {
 }
 
 export default function MembershipPage() {
+  const visible = useSectionVisible('Membership')
+  if (!visible) return <SectionHidden />
   return (
     <>
       <section className="bg-gradient-to-br from-brand-strong via-brand to-green-800 py-24 text-white">

@@ -1,6 +1,7 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { uploadApi } from '@/api'
 import type { NewsItem } from '@/types'
 
 interface NewsEditorProps {
@@ -16,7 +17,9 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
   const [content, setContent] = useState(existingNews?.content ?? '')
   const [coverImage, setCoverImage] = useState(existingNews?.coverImage ?? '')
   const [imagePreview, setImagePreview] = useState(existingNews?.coverImage ?? '')
+  const [category, setCategory] = useState(existingNews?.category ?? 'news')
   const [tags, setTags] = useState(existingNews?.tags.join(', ') ?? '')
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (!existingNews && title) {
@@ -34,17 +37,27 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
     setImagePreview(existingNews?.coverImage ?? '')
   }, [existingNews])
 
-  function handleImageFileChange(e: ChangeEvent<HTMLInputElement>) {
+  async function handleImageFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
+    setUploading(true)
     const reader = new FileReader()
-    reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : ''
-      setCoverImage(result)
-      setImagePreview(result)
+    reader.onload = (ev) => {
+      setImagePreview(typeof ev.target?.result === 'string' ? ev.target.result : '')
     }
     reader.readAsDataURL(file)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const { url } = await uploadApi.uploadImage(formData)
+      setCoverImage(url)
+    } catch {
+      setImagePreview('')
+    } finally {
+      setUploading(false)
+    }
   }
 
   function handleSubmit(e: FormEvent) {
@@ -52,6 +65,7 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
     onSave({
       title,
       slug,
+      category,
       excerpt,
       content,
       coverImage,
@@ -84,6 +98,13 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
         value={slug}
         onChange={(e) => setSlug(e.target.value)}
         placeholder="article-slug"
+      />
+
+      <Input
+        label="Category"
+        value={category}
+        onChange={(e) => setCategory(e.target.value as NewsItem['category'])}
+        placeholder="e.g. News, Event, Announcement"
       />
 
       <div>
@@ -124,12 +145,14 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
           <input
             type="file"
             accept="image/*"
+            disabled={uploading}
             onChange={handleImageFileChange}
             style={{
               width: '100%', border: '1.5px dashed var(--border-default)', borderRadius: 'var(--radius-button)',
               background: 'var(--gray-50)', padding: '12px 16px', fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text-body)',
             }}
           />
+          {uploading && <span style={{ fontSize: '12px', color: 'var(--admin-brand)', marginTop: '4px', display: 'block' }}>Uploading…</span>}
         </div>
 
         <Input
@@ -150,7 +173,7 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
             }}
           />
           <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            Upload a file or paste an image URL. The selected image will be saved with the news article.
+            {uploading ? 'Uploading image…' : 'Select a file to upload, or paste an image URL above.'}
           </div>
         </div>
       </div>
@@ -163,8 +186,8 @@ function NewsEditor({ existingNews, onSave, onCancel }: NewsEditorProps) {
       />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '8px' } as React.CSSProperties}>
-        <Button type="submit" variant="primary">
-          {existingNews ? 'Update' : 'Save'}
+        <Button type="submit" variant="primary" disabled={uploading}>
+          {uploading ? 'Uploading…' : existingNews ? 'Update' : 'Save'}
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel

@@ -17,19 +17,24 @@ function useDonations() {
     queryFn: () => donationsApi.getDonationStats(),
   })
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: KEY })
+    queryClient.invalidateQueries({ queryKey: ['donation-stats'] })
+  }
+
   const createMutation = useMutation<Donation, Error, Omit<Donation, 'id'>>({
     mutationFn: (data) => donationsApi.createDonation(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+    onSuccess: invalidateAll,
   })
 
   const updateMutation = useMutation<Donation, Error, { id: string; data: Partial<Donation> }>({
     mutationFn: ({ id, data }) => donationsApi.updateDonation(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+    onSuccess: invalidateAll,
   })
 
   const deleteMutation = useMutation<void, Error, string>({
     mutationFn: (id) => donationsApi.deleteDonation(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+    onSuccess: invalidateAll,
   })
 
   return {

@@ -17,8 +17,8 @@ function useGallery() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
   })
 
-  const uploadMutation = useMutation<GalleryPhoto, Error, { src: string; caption: string }>({
-    mutationFn: ({ src, caption }) => galleryApi.uploadPhoto(src, caption),
+  const uploadMutation = useMutation<GalleryPhoto, Error, { file: File; caption: string }>({
+    mutationFn: ({ file, caption }) => galleryApi.uploadPhoto(file, caption),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
   })
 

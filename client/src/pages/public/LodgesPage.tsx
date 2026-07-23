@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { CountUp } from '@/components/ui/CountUp';
 import { Reveal } from '@/components/ui/Reveal';
-import { JoinModal } from '@/components/ui/JoinModal';
+
 import { useLodges } from '@/features/lodges/hooks/useLodges';
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility';
 import type { Lodge } from '@/types';
 
 const STATUS: Record<string, { bg: string; fg: string; dot: string }> = {
@@ -91,7 +93,9 @@ function LodgeCard({ lodge, onOpen, delay }: { lodge: Lodge; onOpen: (l: Lodge) 
 }
 
 function LodgeModal({ lodge, onClose, onJoin }: { lodge: Lodge; onClose: () => void; onJoin?: () => void }) {
-  const mapSrc = 'https://www.google.com/maps?q=' + encodeURIComponent(lodge.map) + '&output=embed';
+  const mapSrc = lodge.map.startsWith('http')
+    ? lodge.map + (lodge.map.includes('?') ? '&' : '?') + 'output=embed'
+    : 'https://www.google.com/maps?q=' + encodeURIComponent(lodge.map) + '&output=embed';
   const row = (icon: React.ReactNode, label: string, val: string) => (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
       <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'var(--green-50)', color: 'var(--green-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
@@ -153,10 +157,12 @@ function LodgeModal({ lodge, onClose, onJoin }: { lodge: Lodge; onClose: () => v
 const STATE_ORDER = ['Lagos', 'Ogun', 'Oyo', 'Osun', 'Ondo', 'Ekiti'];
 
 export default function Lodges() {
+  const visible = useSectionVisible('Lodges')
+  if (!visible) return <SectionHidden />
+  const navigate = useNavigate();
   const { lodges, isLoading } = useLodges();
   const [filter, setFilter] = useState('All');
   const [activeLodge, setActiveLodge] = useState<Lodge | null>(null);
-  const [joinOpen, setJoinOpen] = useState(false);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Lodge[]>();
@@ -165,7 +171,12 @@ export default function Lodges() {
       arr.push(l);
       map.set(l.state, arr);
     }
-    return STATE_ORDER.filter((s) => map.has(s)).map((state) => ({ state, lodges: map.get(state)! }));
+    const sorted = [...map.entries()].sort((a, b) => {
+      const ia = STATE_ORDER.indexOf(a[0])
+      const ib = STATE_ORDER.indexOf(b[0])
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
+    })
+    return sorted.map(([state, lodges]) => ({ state, lodges }))
   }, [lodges]);
 
   const allStates = grouped.map((s) => s.state);
@@ -236,18 +247,22 @@ export default function Lodges() {
 
       <section className="container" style={{ padding: '40px var(--container-pad) 30px' }}>
         <SectionHeading eyebrow="Lodge directory" title="Find a lodge, state by state" intro="Tap any lodge to see its coordinator, capacity, live availability and an embedded map." />
-        <div style={{ display: 'flex', gap: '10px', marginTop: '26px', flexWrap: 'wrap' }}>
-          {['All', ...allStates].map((c) => (
-            <button key={c} onClick={() => setFilter(c)} style={{
-              fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-              padding: '9px 18px', borderRadius: 'var(--radius-pill)',
-              border: '1.5px solid ' + (filter === c ? 'var(--green-primary)' : 'var(--border-default)'),
-              background: filter === c ? 'var(--green-primary)' : 'transparent',
-              color: filter === c ? '#fff' : 'var(--text-body)',
-              transition: 'all var(--dur-fast) var(--ease-standard)',
-            }}>{c === 'All' ? 'All states' : c}</button>
-          ))}
-        </div>
+        {lodges.length > 0 ? (
+          <div style={{ display: 'flex', gap: '10px', marginTop: '26px', flexWrap: 'wrap' }}>
+            {['All', ...allStates].map((c) => (
+              <button key={c} onClick={() => setFilter(c)} style={{
+                fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                padding: '9px 18px', borderRadius: 'var(--radius-pill)',
+                border: '1.5px solid ' + (filter === c ? 'var(--green-primary)' : 'var(--border-default)'),
+                background: filter === c ? 'var(--green-primary)' : 'transparent',
+                color: filter === c ? '#fff' : 'var(--text-body)',
+                transition: 'all var(--dur-fast) var(--ease-standard)',
+              }}>{c === 'All' ? 'All states' : c}</button>
+            ))}
+          </div>
+        ) : (
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '15px', marginTop: '32px' }}>No lodges available yet. Check back later.</p>
+        )}
       </section>
 
       {shown.map((s) => (
@@ -264,8 +279,7 @@ export default function Lodges() {
       ))}
 
       <div style={{ height: '64px' }} />
-      {activeLodge && <LodgeModal lodge={activeLodge} onClose={() => setActiveLodge(null)} onJoin={() => setJoinOpen(true)} />}
-      {joinOpen && <JoinModal onClose={() => setJoinOpen(false)} />}
+      {activeLodge && <LodgeModal lodge={activeLodge} onClose={() => setActiveLodge(null)} onJoin={() => navigate('/signup')} />}
     </div>
   );
 }

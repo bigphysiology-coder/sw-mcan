@@ -18,7 +18,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { user, token, isAuthenticated, setAuth, logout: storeLogout } = useAuthStore()
+  const { user, token, isAuthenticated, isLocalAuth, setAuth, logout: storeLogout } = useAuthStore()
   const [isLoading, setIsLoading] = useState(true)
 
   const refreshUser = useCallback(async () => {
@@ -31,12 +31,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // Skip server call for local auth (e.g. registration without email verification)
+    if (isLocalAuth) {
+      setIsLoading(false)
+      return
+    }
     if (token) {
       refreshUser().finally(() => setIsLoading(false))
     } else {
       setIsLoading(false)
     }
-  }, [token, refreshUser])
+  }, [token, isLocalAuth, refreshUser])
 
   const login = useCallback(async (payload: LoginPayload) => {
     const res = await authApi.login(payload)

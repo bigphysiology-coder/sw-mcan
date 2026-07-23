@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/common/EmptyState'
 import { useEvents } from '@/features/events/hooks/useEvents'
 import type { EventItem } from '@/types'
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility'
 
 const eventCategories = [
   { label: 'All', value: '' },
@@ -16,6 +17,8 @@ const eventCategories = [
 ] as const
 
 export default function EventsPage() {
+  const visible = useSectionVisible('Events')
+  if (!visible) return <SectionHidden />
   const { events, isLoading } = useEvents()
   const [activeCategory, setActiveCategory] = useState('')
   const [showPast, setShowPast] = useState(false)

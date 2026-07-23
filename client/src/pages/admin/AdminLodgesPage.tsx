@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/Button'
 import type { Lodge } from '@/types'
 
 export default function AdminLodgesPage() {
-  const { lodges, isLoading, createLodge, updateLodge, isCreating, isUpdating } = useLodges()
+  const { lodges, isLoading, createLodge, updateLodge, deleteLodge, isCreating, isUpdating, isDeleting } = useLodges()
   const [editingLodge, setEditingLodge] = useState<Lodge | null>(null)
   const [creatingLodge, setCreatingLodge] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Lodge | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   function openEdit(lodge: Lodge) {
     setCreatingLodge(false)
@@ -26,21 +29,46 @@ export default function AdminLodgesPage() {
   }
 
   async function handleSave(data: Partial<Lodge>) {
-    if (creatingLodge) {
-      await createLodge(data as Omit<Lodge, 'id'>)
-      setCreatingLodge(false)
-      return
+    setError(null)
+    try {
+      if (creatingLodge) {
+        await createLodge(data as Omit<Lodge, 'id'>)
+        setCreatingLodge(false)
+        setSuccess('Lodge created')
+      } else if (editingLodge) {
+        await updateLodge({ id: editingLodge.id, data })
+        setEditingLodge(null)
+        setSuccess('Lodge updated')
+      }
+      setTimeout(() => setSuccess(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save lodge')
     }
+  }
 
-    if (!editingLodge) return
-    await updateLodge({ id: editingLodge.id, data })
-    setEditingLodge(null)
+  async function handleDelete() {
+    if (!deleteTarget) return
+    setError(null)
+    try {
+      await deleteLodge(deleteTarget.id)
+      setDeleteTarget(null)
+      setSuccess('Lodge deleted')
+      setTimeout(() => setSuccess(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete lodge')
+    }
   }
 
   if (isLoading) return <div style={{ padding: '40px', textAlign: 'center', color: '#9CA3AF' }}>Loading lodges…</div>
 
   return (
     <div>
+      {success && (
+        <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '8px', color: '#065F46', fontSize: '14px', fontWeight: 500 }}>{success}</div>
+      )}
+      {error && (
+        <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', color: '#DC2626', fontSize: '14px' }}>{error}</div>
+      )}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: 0 }}>Lodges</h1>
@@ -65,12 +93,29 @@ export default function AdminLodgesPage() {
             </div>
             <span style={{ fontSize: '14px', color: '#4a7c5e', fontWeight: 500, width: '80px', textAlign: 'center' }}>{lodge.state}</span>
             <span style={{ fontSize: '14px', color: '#374151', fontWeight: 600, minWidth: '96px', textAlign: 'center' }}>{lodge.status}</span>
-            <Button variant="secondary" size="sm" onClick={() => openEdit(lodge)} disabled={isUpdating}>
-              Edit
-            </Button>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <Button variant="secondary" size="sm" onClick={() => openEdit(lodge)} disabled={isUpdating}>
+                Edit
+              </Button>
+              <button onClick={() => setDeleteTarget(lodge)} style={{ padding: '6px 12px', background: 'transparent', color: '#DC2626', fontSize: '13px', fontWeight: 600, border: '1px solid #FECACA', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                Delete
+              </button>
+            </div>
           </div>
         ))}
       </div>
+
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete lodge" size="sm">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ fontSize: '14px', color: '#374151', margin: 0 }}>Delete <strong>{deleteTarget?.name}</strong>? This cannot be undone.</p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</Button>
+            <button onClick={handleDelete} disabled={isDeleting} style={{ padding: '10px 20px', background: isDeleting ? '#9CA3AF' : '#DC2626', color: '#fff', border: 'none', borderRadius: '8px', fontFamily: 'inherit', fontSize: '14px', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer' }}>
+              {isDeleting ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal isOpen={creatingLodge || !!editingLodge} onClose={handleCancel} title={creatingLodge ? 'Create lodge' : editingLodge ? `Edit ${editingLodge.name}` : 'Edit lodge'} size="lg">
         <LodgeEditor existingLodge={editingLodge} onSave={handleSave} onCancel={handleCancel} isSaving={isCreating || isUpdating} />

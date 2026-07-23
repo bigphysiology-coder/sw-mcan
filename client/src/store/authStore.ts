@@ -6,7 +6,9 @@ interface AuthState {
   user: User | null
   token: string | null
   isAuthenticated: boolean
+  isLocalAuth: boolean
   setAuth: (user: User, token: string) => void
+  setLocalAuth: (user: User) => void
   logout: () => void
   updateUser: (user: Partial<User>) => void
 }
@@ -29,15 +31,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: loadPersistedUser(),
   token: getPersistedToken(),
   isAuthenticated: !!getPersistedToken(),
+  isLocalAuth: false,
   setAuth: (user, token) => {
     localStorage.setItem(AUTH_TOKEN_KEY, token)
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
-    set({ user, token, isAuthenticated: true })
+    set({ user, token, isAuthenticated: true, isLocalAuth: false })
+  },
+  setLocalAuth: (user) => {
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
+    set({ user, token: null, isAuthenticated: true, isLocalAuth: true })
   },
   logout: () => {
     localStorage.removeItem(AUTH_TOKEN_KEY)
     localStorage.removeItem(AUTH_USER_KEY)
-    set({ user: null, token: null, isAuthenticated: false })
+    set({ user: null, token: null, isAuthenticated: false, isLocalAuth: false })
   },
   updateUser: (partial) =>
     set((s) => {

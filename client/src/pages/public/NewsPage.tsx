@@ -2,8 +2,11 @@ import { useNews } from '@/features/news/hooks/useNews'
 import { NewsCard } from '@/features/news/components/NewsCard'
 import { Loader } from '@/components/common/Loader'
 import { EmptyState } from '@/components/common/EmptyState'
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility'
 
 export default function News() {
+  const visible = useSectionVisible('News')
+  if (!visible) return <SectionHidden />
   const { news, isLoading } = useNews()
 
   if (isLoading) {

@@ -3,7 +3,14 @@ import type { DigitalIdRequest } from '@/types'
 
 export const digitalIdApi = {
   async requestDigitalId(data: {
+    fullName: string
+    nyscCallUpNumber: string
+    state: string
+    phone: string
     passportPhoto: string
+    postHeld?: string
+    validityBegin?: string
+    validityEnd?: string
     signature?: string
     additionalNote?: string
   }): Promise<DigitalIdRequest> {
@@ -32,5 +39,13 @@ export const digitalIdApi = {
 
   async deleteRequest(id: string): Promise<void> {
     return api.revoke(id, 'Removed by admin')
+  },
+
+  async downloadImage(id: string): Promise<{ url: string }> {
+    return api.downloadImage(id)
+  },
+
+  async downloadPdf(id: string): Promise<{ url: string }> {
+    return api.downloadPdf(id)
   },
 }

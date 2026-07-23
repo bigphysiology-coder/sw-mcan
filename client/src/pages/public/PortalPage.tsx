@@ -3,8 +3,11 @@ import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Button } from '@/components/ui/Button';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility';
 
 export default function Portal() {
+  const visible = useSectionVisible('Portal')
+  if (!visible) return <SectionHidden />
   const { login, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -76,7 +79,8 @@ export default function Portal() {
             {isLoading ? 'Signing in...' : 'Sign in'}
           </Button>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
-            Having trouble? <Link to="/contact" style={{ color: 'var(--green-primary)', fontWeight: 600 }}>Contact the secretariat</Link>
+            Don&rsquo;t have an account?{' '}
+            <Link to="/signup" style={{ color: 'var(--green-primary)', fontWeight: 600 }}>Create account</Link>
           </p>
         </form>
       </section>

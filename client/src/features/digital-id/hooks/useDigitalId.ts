@@ -4,6 +4,17 @@ import type { DigitalIdRequest } from '@/types'
 
 const DIGITAL_ID_KEY = ['digital-ids']
 
+function downloadFromUrl(url: string, filename: string) {
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.target = '_blank'
+  a.rel = 'noopener noreferrer'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
 function useDigitalId(userId?: string) {
   const queryClient = useQueryClient()
 
@@ -13,16 +24,36 @@ function useDigitalId(userId?: string) {
     enabled: !!userId,
   })
 
-  const requestMutation = useMutation<DigitalIdRequest, Error, { passportPhoto: string; signature?: string; additionalNote?: string }>({
+  const requestMutation = useMutation<DigitalIdRequest, Error, { fullName: string; nyscCallUpNumber: string; state: string; phone: string; passportPhoto: string; postHeld?: string; validityBegin?: string; validityEnd?: string; signature?: string; additionalNote?: string }>({
     mutationFn: (data) => digitalIdApi.requestDigitalId(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: DIGITAL_ID_KEY }),
   })
+
+  async function handleDownloadImage(id: string, name: string) {
+    try {
+      const { url } = await digitalIdApi.downloadImage(id)
+      downloadFromUrl(url, `${name.replace(/\s+/g, '_')}_ID_Image.jpg`)
+    } catch {
+      // silent
+    }
+  }
+
+  async function handleDownloadPdf(id: string, name: string) {
+    try {
+      const { url } = await digitalIdApi.downloadPdf(id)
+      downloadFromUrl(url, `${name.replace(/\s+/g, '_')}_ID_Card.pdf`)
+    } catch {
+      // silent
+    }
+  }
 
   return {
     myId,
     myIdLoading,
     requestDigitalId: requestMutation.mutateAsync,
     isRequesting: requestMutation.isPending,
+    downloadImage: handleDownloadImage,
+    downloadPdf: handleDownloadPdf,
   }
 }
 
@@ -49,6 +80,24 @@ function useDigitalIdRequests() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: DIGITAL_ID_KEY }),
   })
 
+  async function handleDownloadImage(id: string, name: string) {
+    try {
+      const { url } = await digitalIdApi.downloadImage(id)
+      downloadFromUrl(url, `${name.replace(/\s+/g, '_')}_ID_Image.jpg`)
+    } catch {
+      // silent
+    }
+  }
+
+  async function handleDownloadPdf(id: string, name: string) {
+    try {
+      const { url } = await digitalIdApi.downloadPdf(id)
+      downloadFromUrl(url, `${name.replace(/\s+/g, '_')}_ID_Card.pdf`)
+    } catch {
+      // silent
+    }
+  }
+
   return {
     requests: requests || [],
     isLoading,
@@ -59,6 +108,8 @@ function useDigitalIdRequests() {
     isApproving: approveMutation.isPending,
     isRejecting: rejectMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    downloadImage: handleDownloadImage,
+    downloadPdf: handleDownloadPdf,
   }
 }
 

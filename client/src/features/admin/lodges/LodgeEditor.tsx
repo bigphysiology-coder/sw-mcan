@@ -1,6 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { uploadApi } from '@/api'
 import type { Lodge } from '@/types'
 
 interface LodgeEditorProps {
@@ -28,6 +29,7 @@ function toFormValues(lodge?: Lodge | null) {
 
 function LodgeEditor({ existingLodge, onSave, onCancel, isSaving = false }: LodgeEditorProps) {
   const [form, setForm] = useState(() => toFormValues(existingLodge))
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     setForm(toFormValues(existingLodge))
@@ -37,20 +39,26 @@ function LodgeEditor({ existingLodge, onSave, onCancel, isSaving = false }: Lodg
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
+  async function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      updateField('photo', String(reader.result || ''))
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const { url } = await uploadApi.uploadImage(formData)
+      updateField('photo', url)
+    } catch {
+      // upload failed, keep existing photo
+    } finally {
+      setUploading(false)
     }
-    reader.readAsDataURL(file)
   }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    void onSave({
+    const data: Partial<Lodge> = {
       name: form.name.trim(),
       photo: form.photo.trim(),
       address: form.address.trim(),
@@ -59,8 +67,13 @@ function LodgeEditor({ existingLodge, onSave, onCancel, isSaving = false }: Lodg
       status: form.status,
       coordinator: form.coordinator.trim(),
       phone: form.phone.trim(),
-      map: form.map.trim(),
-    })
+    }
+    // Only include map if it has a value; backend rejects empty string as invalid URL
+    const mapValue = form.map.trim()
+    if (mapValue) {
+      data.map = mapValue
+    }
+    void onSave(data)
   }
 
   return (
@@ -80,7 +93,8 @@ function LodgeEditor({ existingLodge, onSave, onCancel, isSaving = false }: Lodg
             </div>
           )}
           <Input label="Photo URL" value={form.photo} onChange={(e) => updateField('photo', e.target.value)} placeholder="Paste an image URL or upload a file" />
-          <Input label="Upload photo" type="file" accept="image/*" onChange={handlePhotoUpload} />
+          <Input label="Upload photo" type="file" accept="image/*" disabled={uploading} onChange={handlePhotoUpload} />
+{uploading && <span style={{ fontSize: '12px', color: 'var(--admin-brand)', marginTop: '4px', display: 'block' }}>Uploading...</span>}
         </div>
       </div>
 
@@ -118,17 +132,17 @@ function LodgeEditor({ existingLodge, onSave, onCancel, isSaving = false }: Lodg
         <Input label="Phone" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="0800 000 0000" />
       </div>
 
-      <Input label="Map search text" value={form.map} onChange={(e) => updateField('map', e.target.value)} placeholder="Search phrase or address for the map embed" />
+      <Input label="Google Maps URL" value={form.map} onChange={(e) => updateField('map', e.target.value)} placeholder="https://maps.google.com/?q=Ikeja+Lagos" />
 
       <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: 'var(--text-muted)' }}>
         Changes are saved to the same lodge store used by the public Lodges page, so updates appear live after save.
       </p>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '4px' }}>
-        <Button type="submit" variant="primary" disabled={isSaving}>
-          {existingLodge ? 'Save changes' : 'Create lodge'}
+        <Button type="submit" variant="primary" disabled={isSaving || uploading}>
+          {uploading ? 'Uploading...' : existingLodge ? 'Save changes' : 'Create lodge'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving || uploading}>
           Cancel
         </Button>
       </div>

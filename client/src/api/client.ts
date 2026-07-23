@@ -46,8 +46,9 @@ async function refreshToken(): Promise<string> {
     })
   }
 
-  const data = await res.json()
-  const newToken = data.accessToken ?? data.token
+  const raw = await res.json()
+  const inner = (raw.data ?? raw) as Record<string, unknown>
+  const newToken = (inner.accessToken ?? inner.token) as string
   localStorage.setItem(AUTH_TOKEN_KEY, newToken)
   return newToken
 }
@@ -148,10 +149,17 @@ async function request<T>(
     }
     try {
       const json = await res.json()
+      const errs = json.errors as Record<string, string[]> | undefined
+      const details = json.error?.details as Array<{ field: string; message: string }> | undefined
       errorData = {
         message: json.message || errorData.message,
         status: res.status,
-        errors: json.errors,
+        errors: errs ?? (details
+          ? details.reduce<Record<string, string[]>>((acc, d) => {
+              (acc[d.field] ??= []).push(d.message)
+              return acc
+            }, {})
+          : undefined),
       }
     } catch {
       // ignore parse error
@@ -162,8 +170,9 @@ async function request<T>(
   if (res.status === 204) return undefined as T
 
   const json: unknown = await res.json()
-  if (json && typeof json === 'object' && (json as Record<string, unknown>).success === true && 'data' in (json as Record<string, unknown>)) {
-    return (json as Record<string, unknown>).data as T
+  const obj = json as Record<string, unknown>
+  if (obj && typeof obj === 'object' && (obj.success === true || obj.success === 'true') && 'data' in obj) {
+    return obj.data as T
   }
   return json as T
 }

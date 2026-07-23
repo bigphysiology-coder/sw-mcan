@@ -1,8 +1,11 @@
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
 import { useGallery } from '@/features/gallery/hooks/useGallery';
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility';
 
 export default function Gallery() {
+  const visible = useSectionVisible('Gallery');
+  if (!visible) return <SectionHidden />;
   const { photos, isLoading } = useGallery();
 
   if (isLoading) return <div style={{ padding: '96px 0', textAlign: 'center', color: 'var(--text-muted)' }}>Loading gallery…</div>;

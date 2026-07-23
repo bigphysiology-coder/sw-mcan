@@ -1,8 +1,26 @@
 import { useState } from 'react'
 import { IdCardRequest } from '@/features/digital-id/components/IdCardRequest'
+import { IdCardPreview } from '@/features/digital-id/components/IdCardPreview'
+import { useDigitalId } from '@/features/digital-id/hooks/useDigitalId'
+import { useAuthStore } from '@/store/authStore'
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility'
 
 export default function DigitalIdPage() {
+  const visible = useSectionVisible('Digital ID')
+  if (!visible) return <SectionHidden />
+
+  const user = useAuthStore((s) => s.user)
+  const { myId, myIdLoading, downloadImage, downloadPdf } = useDigitalId(user?.id)
+
   const [submitted, setSubmitted] = useState(false)
+
+  if (myIdLoading) {
+    return (
+      <section style={{ padding: '96px 24px', textAlign: 'center' as const, color: '#9CA3AF' } as React.CSSProperties}>
+        Loading your ID card…
+      </section>
+    )
+  }
 
   return (
     <>
@@ -46,14 +64,15 @@ export default function DigitalIdPage() {
         padding: '64px 0'
       } as React.CSSProperties}>
         <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' } as React.CSSProperties}>
-          {submitted ? (
+          {submitted && (
             <div style={{
               maxWidth: '448px',
               borderRadius: 'var(--radius-card)',
               border: '1px solid var(--green-300)',
               background: 'var(--green-50)',
               padding: '32px',
-              textAlign: 'center'
+              textAlign: 'center',
+              marginBottom: '32px',
             } as React.CSSProperties}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' } as React.CSSProperties}>
                 <svg style={{ width: '48px', height: '48px', color: 'var(--green-primary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -81,7 +100,111 @@ export default function DigitalIdPage() {
                 Submit Another Request
               </button>
             </div>
-          ) : (
+          )}
+
+          {myId?.status === 'approved' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
+              <IdCardPreview idData={{
+                fullName: myId.fullName ?? '',
+                state: myId.state ?? '',
+                validityBegin: myId.validityBegin || '',
+                validityEnd: myId.validityEnd || '',
+                nyscCallUpNumber: myId.nyscCallUpNumber ?? '',
+                issueDate: myId.createdAt,
+                photo: myId.photo || '',
+                phone: myId.phone || '',
+                postHeld: myId.postHeld || '',
+                holderSignature: myId.holderSignature || '',
+              }} />
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  onClick={() => downloadImage(myId.id, myId.fullName ?? 'ID_Card')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', background: 'var(--green-primary)', color: '#fff', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 11l5 5 5-5M12 4v12" /></svg>
+                  Download Image
+                </button>
+                <button
+                  onClick={() => downloadPdf(myId.id, myId.fullName ?? 'ID_Card')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', background: 'var(--green-primary)', color: '#fff', fontSize: '14px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                  Download PDF
+                </button>
+              </div>
+            </div>
+          )}
+
+          {myId?.status === 'pending' && !submitted && (
+            <div style={{
+              maxWidth: '448px',
+              borderRadius: 'var(--radius-card)',
+              border: '1px solid var(--gold-300)',
+              background: 'var(--gold-50)',
+              padding: '32px',
+              textAlign: 'center',
+              marginBottom: '32px',
+            } as React.CSSProperties}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' } as React.CSSProperties}>
+                <svg style={{ width: '48px', height: '48px', color: 'var(--gold-500)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: '20px', fontWeight: 700,
+                color: 'var(--gold-800)', margin: 0
+              } as React.CSSProperties}>Request Pending</h2>
+              <p style={{ marginTop: '12px', fontSize: '14px', color: 'var(--gold-700)', fontFamily: 'var(--font-body)', lineHeight: 1.6 } as React.CSSProperties}>
+                Your MCAN Southwest ID request is currently under review. You&rsquo;ll be notified once it&rsquo;s been approved.
+              </p>
+            </div>
+          )}
+
+          {myId?.status === 'rejected' && !submitted && (
+            <div style={{
+              maxWidth: '448px',
+              borderRadius: 'var(--radius-card)',
+              border: '1px solid var(--red-300)',
+              background: 'var(--red-50)',
+              padding: '32px',
+              textAlign: 'center',
+              marginBottom: '32px',
+            } as React.CSSProperties}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' } as React.CSSProperties}>
+                <svg style={{ width: '48px', height: '48px', color: '#DC2626' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: '20px', fontWeight: 700,
+                color: '#991B1B', margin: 0
+              } as React.CSSProperties}>Request Rejected</h2>
+              {myId.reason && (
+                <p style={{ marginTop: '8px', fontSize: '14px', color: '#DC2626', fontFamily: 'var(--font-body)', fontStyle: 'italic', lineHeight: 1.6 } as React.CSSProperties}>
+                  Reason: {myId.reason}
+                </p>
+              )}
+              <p style={{ marginTop: '12px', fontSize: '14px', color: '#991B1B', fontFamily: 'var(--font-body)', lineHeight: 1.6 } as React.CSSProperties}>
+                You may submit a new request with corrected information.
+              </p>
+              <button
+                onClick={() => { /* fall through to form below */ }}
+                style={{
+                  marginTop: '20px',
+                  fontFamily: 'var(--font-body)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                  padding: '10px 24px', borderRadius: 'var(--radius-pill)',
+                  border: '1px solid #DC2626',
+                  background: 'transparent', color: '#DC2626',
+                }}
+              >
+                Submit New Request
+              </button>
+            </div>
+          )}
+
+          {(!myId || (myId.status === 'rejected' && submitted)) && !submitted && (
             <IdCardRequest onSuccess={() => setSubmitted(true)} />
           )}
 

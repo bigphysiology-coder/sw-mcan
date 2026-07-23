@@ -1,4 +1,5 @@
 import { LoginForm } from '@/features/auth/components/LoginForm'
+import { Link } from 'react-router-dom'
 import { APP_NAME } from '@/constants'
 
 export default function LoginPage() {
@@ -52,13 +53,14 @@ export default function LoginPage() {
         </div>
         <LoginForm />
         <p style={{
-          marginTop: '24px',
+          marginTop: '20px',
           textAlign: 'center' as const,
-          fontSize: '12px',
+          fontSize: '14px',
           color: 'var(--text-muted)',
           fontFamily: 'var(--font-body)'
         } as React.CSSProperties}>
-          Executive admin access only
+          Don&rsquo;t have an account?{' '}
+          <Link to="/signup" style={{ fontWeight: 600, color: 'var(--green-primary)', textDecoration: 'underline' }}>Create account</Link>
         </p>
       </div>
     </div>

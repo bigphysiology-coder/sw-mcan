@@ -162,9 +162,33 @@ export interface WebContentSection {
   visible: boolean
 }
 
+export interface WebContentStat {
+  label: string
+  value: string
+  prefix?: string
+  suffix?: string
+}
+
+export interface WebContentPillar {
+  title: string
+  description: string
+}
+
+export interface WebContentStateChapter {
+  name: string
+  members: string
+}
+
 export interface WebContent {
   headline: string
+  subtitle?: string
+  heroBackground?: string
   sections: WebContentSection[]
+  stats?: WebContentStat[]
+  pillars?: WebContentPillar[]
+  stateChapters?: WebContentStateChapter[]
+  ctaTitle?: string
+  ctaSubtitle?: string
 }
 
 export interface ProgramItem {

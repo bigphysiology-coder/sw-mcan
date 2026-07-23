@@ -3,6 +3,7 @@ import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { contactApi } from '@/features/contact/services/contactApi'
+import { useSectionVisible, SectionHidden } from '@/utils/sectionVisibility'
 
 const CONTACT_CATEGORIES = [
   { value: 'general', label: 'General Inquiry' },
@@ -14,6 +15,8 @@ const CONTACT_CATEGORIES = [
 ] as const
 
 export default function Contact() {
+  const visible = useSectionVisible('Contact')
+  if (!visible) return <SectionHidden />
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')

@@ -49,26 +49,37 @@ export const adminApi = {
 // ──────────────────────────── NEWS ────────────────────────────
 
 export const newsApi = {
-  getPublic: (params?: { page?: number; limit?: number; category?: string; search?: string; featured?: boolean }) => {
+  getPublic: async (params?: { page?: number; limit?: number; category?: string; search?: string; featured?: boolean }) => {
     const q = new URLSearchParams()
+    q.set('_', Date.now().toString())
     if (params?.page) q.set('page', String(params.page))
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.category) q.set('category', params.category)
     if (params?.search) q.set('search', params.search)
     if (params?.featured !== undefined) q.set('featured', String(params.featured))
     const qs = q.toString()
-    return client.get<NewsItem[]>(`/news${qs ? `?${qs}` : ''}`)
+    const res = await client.get<Record<string, unknown>>(`/news?${qs}`)
+    if (Array.isArray(res)) return res as NewsItem[]
+    const obj = res as Record<string, unknown>
+    return (obj.articles ?? obj.news ?? obj.data ?? []) as NewsItem[]
   },
 
-  getBySlug: (slug: string) =>
-    client.get<NewsItem>(`/news/${slug}`),
+  getBySlug: async (slug: string) => {
+    const res = await client.get<Record<string, unknown>>(`/news/${slug}`)
+    const obj = res as Record<string, unknown>
+    return (obj.article ?? obj) as unknown as NewsItem
+  },
 
-  getAllAdmin: (params?: { status?: string; search?: string }) => {
+  getAllAdmin: async (params?: { status?: string; search?: string }) => {
     const q = new URLSearchParams()
+    q.set('_', Date.now().toString())
     if (params?.status) q.set('status', params.status)
     if (params?.search) q.set('search', params.search)
     const qs = q.toString()
-    return client.get<NewsItem[]>(`/news/admin/all${qs ? `?${qs}` : ''}`)
+    const res = await client.get<Record<string, unknown>>(`/news/admin/all?${qs}`)
+    if (Array.isArray(res)) return res
+    const obj = res as Record<string, unknown>
+    return (obj.articles ?? obj.news ?? obj.data ?? []) as NewsItem[]
   },
 
   create: (data: {
@@ -99,12 +110,13 @@ export const newsApi = {
 // ──────────────────────────── MEMBERS ────────────────────────────
 
 export const membersApi = {
-  getAll: (params?: {
+  getAll: async (params?: {
     page?: number; limit?: number; sortBy?: string; sortOrder?: string
     search?: string; status?: string; membershipType?: string
     state?: string; chapter?: string; digitalIdStatus?: string
   }) => {
     const q = new URLSearchParams()
+    q.set('_', Date.now().toString())
     if (params?.page) q.set('page', String(params.page))
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.sortBy) q.set('sortBy', params.sortBy)
@@ -116,11 +128,18 @@ export const membersApi = {
     if (params?.chapter) q.set('chapter', params.chapter)
     if (params?.digitalIdStatus) q.set('digitalIdStatus', params.digitalIdStatus)
     const qs = q.toString()
-    return client.get<PaginatedResponse<Member>>(`/members${qs ? `?${qs}` : ''}`)
+    const res = await client.get<Record<string, unknown>>(`/members?${qs}`)
+    if (Array.isArray(res)) return { data: res, total: res.length, page: 1, perPage: res.length, totalPages: 1 } as PaginatedResponse<Member>
+    const obj = res as Record<string, unknown>
+    const arr = (obj.members ?? obj.data ?? []) as Member[]
+    return { data: arr, total: (obj.total as number) ?? arr.length, page: (obj.page as number) ?? 1, perPage: (obj.perPage as number) ?? arr.length, totalPages: (obj.totalPages as number) ?? 1 } as PaginatedResponse<Member>
   },
 
-  getById: (id: string) =>
-    client.get<Member>(`/members/${id}`),
+  getById: async (id: string) => {
+    const res = await client.get<Record<string, unknown>>(`/members/${id}`)
+    const obj = res as Record<string, unknown>
+    return (obj.member ?? obj) as unknown as Member
+  },
 
   update: (id: string, data: Partial<Member>) =>
     client.patch<Member>(`/members/${id}`, data),
@@ -146,11 +165,12 @@ interface PaginatedResponse<T> {
 // ──────────────────────────── EVENTS ────────────────────────────
 
 export const eventsApi = {
-  getPublic: (params?: {
+  getPublic: async (params?: {
     page?: number; limit?: number; upcoming?: boolean; past?: boolean
     category?: string; state?: string; search?: string
   }) => {
     const q = new URLSearchParams()
+    q.set('_', Date.now().toString())
     if (params?.page) q.set('page', String(params.page))
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.upcoming !== undefined) q.set('upcoming', String(params.upcoming))
@@ -159,15 +179,26 @@ export const eventsApi = {
     if (params?.state) q.set('state', params.state)
     if (params?.search) q.set('search', params.search)
     const qs = q.toString()
-    return client.get<EventItem[]>(`/events${qs ? `?${qs}` : ''}`)
+    const res = await client.get<Record<string, unknown>>(`/events?${qs}`)
+    if (Array.isArray(res)) return res as EventItem[]
+    const obj = res as Record<string, unknown>
+    return (obj.events ?? obj.data ?? []) as EventItem[]
   },
 
-  getBySlug: (slug: string) =>
-    client.get<EventItem>(`/events/${slug}`),
+  getBySlug: async (slug: string) => {
+    const res = await client.get<Record<string, unknown>>(`/events/${slug}`)
+    const obj = res as Record<string, unknown>
+    return (obj.event ?? obj) as unknown as EventItem
+  },
 
-  getAllAdmin: (params?: { status?: string }) => {
-    const qs = params?.status ? `?status=${params.status}` : ''
-    return client.get<EventItem[]>(`/events/admin/all${qs}`)
+  getAllAdmin: async (params?: { status?: string }) => {
+    const q = new URLSearchParams()
+    q.set('_', Date.now().toString())
+    if (params?.status) q.set('status', params.status)
+    const res = await client.get<Record<string, unknown>>(`/events/admin/all?${q.toString()}`)
+    if (Array.isArray(res)) return res as EventItem[]
+    const obj = res as Record<string, unknown>
+    return (obj.events ?? obj.data ?? []) as EventItem[]
   },
 
   create: (data: {
@@ -205,7 +236,14 @@ export const eventsApi = {
 
 export const digitalIdApi = {
   request: (data: {
+    fullName: string
+    nyscCallUpNumber: string
+    state: string
+    phone: string
     passportPhoto: string
+    postHeld?: string
+    validityBegin?: string
+    validityEnd?: string
     signature?: string
     additionalNote?: string
   }) =>
@@ -214,18 +252,25 @@ export const digitalIdApi = {
   getMyId: () =>
     client.get<DigitalIdRequest>('/digital-id/my-id'),
 
-  getAll: (params?: { page?: number; limit?: number; status?: string; search?: string }) => {
+  getAll: async (params?: { page?: number; limit?: number; status?: string; search?: string }) => {
     const q = new URLSearchParams()
+    q.set('_', Date.now().toString())
     if (params?.page) q.set('page', String(params.page))
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.status) q.set('status', params.status)
     if (params?.search) q.set('search', params.search)
     const qs = q.toString()
-    return client.get<DigitalIdRequest[]>(`/digital-id${qs ? `?${qs}` : ''}`)
+    const res = await client.get<Record<string, unknown>>(`/digital-id?${qs}`)
+    if (Array.isArray(res)) return res as DigitalIdRequest[]
+    const obj = res as Record<string, unknown>
+    return (obj.digitalIds ?? obj.requests ?? obj.data ?? []) as DigitalIdRequest[]
   },
 
-  getById: (id: string) =>
-    client.get<DigitalIdRequest>(`/digital-id/${id}`),
+  getById: async (id: string) => {
+    const res = await client.get<Record<string, unknown>>(`/digital-id/${id}`)
+    const obj = res as Record<string, unknown>
+    return (obj.digitalId ?? obj.request ?? obj) as unknown as DigitalIdRequest
+  },
 
   approve: (id: string, note?: string) =>
     client.patch<DigitalIdRequest>(`/digital-id/${id}/approve`, { note }),
@@ -257,18 +302,25 @@ export const contactApi = {
   }) =>
     client.post<ContactMessage>('/contact', data),
 
-  getAll: (params?: { page?: number; limit?: number; isRead?: boolean; category?: string }) => {
+  getAll: async (params?: { page?: number; limit?: number; isRead?: boolean; category?: string }) => {
     const q = new URLSearchParams()
+    q.set('_', Date.now().toString())
     if (params?.page) q.set('page', String(params.page))
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.isRead !== undefined) q.set('isRead', String(params.isRead))
     if (params?.category) q.set('category', params.category)
     const qs = q.toString()
-    return client.get<ContactMessage[]>(`/contact${qs ? `?${qs}` : ''}`)
+    const res = await client.get<Record<string, unknown>>(`/contact?${qs}`)
+    if (Array.isArray(res)) return res as ContactMessage[]
+    const obj = res as Record<string, unknown>
+    return (obj.messages ?? obj.contact ?? obj.data ?? []) as ContactMessage[]
   },
 
-  getById: (id: string) =>
-    client.get<ContactMessage>(`/contact/${id}`),
+  getById: async (id: string) => {
+    const res = await client.get<Record<string, unknown>>(`/contact/${id}`)
+    const obj = res as Record<string, unknown>
+    return (obj.message ?? obj.contact ?? obj) as unknown as ContactMessage
+  },
 
   delete: (id: string) =>
     client.delete<void>(`/contact/${id}`),
@@ -308,8 +360,12 @@ export const authApi = {
 // ──────────────────────────── ADMIN USERS (superadmin) ────────────────────────────
 
 export const adminUsersApi = {
-  getAll: () =>
-    client.get<User[]>('/admin-users'),
+  getAll: async () => {
+    const res = await client.get<Record<string, unknown>>('/admin-users')
+    if (Array.isArray(res)) return res as User[]
+    const obj = res as Record<string, unknown>
+    return (obj.users ?? obj.data ?? []) as User[]
+  },
 
   invite: (data: { email: string; role: string }) =>
     client.post<User>('/admin-users/invite', data),
@@ -327,16 +383,20 @@ export const adminUsersApi = {
 // ──────────────────────────── DONATIONS ────────────────────────────
 
 export const donationsApi = {
-  getAll: (params?: { page?: number; limit?: number; status?: string }) => {
+  getAll: async (params?: { page?: number; limit?: number; status?: string }) => {
     const q = new URLSearchParams()
+    q.set('_', Date.now().toString())
     if (params?.page) q.set('page', String(params.page))
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.status) q.set('status', params.status)
     const qs = q.toString()
-    return client.get<Donation[]>(`/donations${qs ? `?${qs}` : ''}`)
+    const res = await client.get<Record<string, unknown>>(`/donations?${qs}`)
+    if (Array.isArray(res)) return res as Donation[]
+    const obj = res as Record<string, unknown>
+    return (obj.donations ?? obj.data ?? []) as Donation[]
   },
 
-  create: (data: { donor: string; amount: string; amountValue?: number; purpose: string }) =>
+  create: (data: { donor: string; amount: string; amountValue?: number; purpose: string; date?: string; status?: string }) =>
     client.post<Donation>('/donations', data),
 
   update: (id: string, data: Partial<Donation>) =>
@@ -345,15 +405,22 @@ export const donationsApi = {
   delete: (id: string) =>
     client.delete<void>(`/donations/${id}`),
 
-  getStats: () =>
-    client.get<{ totalDonations: number; raisedYear: number; raisedMonth: number }>('/donations/stats'),
+  getStats: async () => {
+    const res = await client.get<Record<string, unknown>>('/donations/stats')
+    const obj = res as Record<string, unknown>
+    return (obj.stats ?? obj) as unknown as { totalDonations: number; raisedYear: number; raisedMonth: number }
+  },
 }
 
 // ──────────────────────────── EXECUTIVES ────────────────────────────
 
 export const executivesApi = {
-  getAll: () =>
-    client.get<Executive[]>('/executives'),
+  getAll: async () => {
+    const res = await client.get<Record<string, unknown>>('/executives')
+    if (Array.isArray(res)) return res as Executive[]
+    const obj = res as Record<string, unknown>
+    return (obj.executives ?? obj.data ?? []) as Executive[]
+  },
 
   create: (data: { name: string; role: string; photo: string; state: string }) =>
     client.post<Executive>('/executives', data),
@@ -368,8 +435,12 @@ export const executivesApi = {
 // ──────────────────────────── GALLERY ────────────────────────────
 
 export const galleryApi = {
-  getAll: () =>
-    client.get<GalleryPhoto[]>('/gallery'),
+  getAll: async () => {
+    const res = await client.get<Record<string, unknown>>('/gallery')
+    if (Array.isArray(res)) return res as GalleryPhoto[]
+    const obj = res as Record<string, unknown>
+    return (obj.gallery ?? obj.photos ?? obj.data ?? []) as GalleryPhoto[]
+  },
 
   create: (data: { src: string; caption: string; span?: string }) =>
     client.post<GalleryPhoto>('/gallery', data),
@@ -387,12 +458,16 @@ export const galleryApi = {
 // ──────────────────────────── LODGES ────────────────────────────
 
 export const lodgesApi = {
-  getAll: (params?: { status?: string; state?: string }) => {
+  getAll: async (params?: { status?: string; state?: string }) => {
     const q = new URLSearchParams()
+    q.set('_', Date.now().toString())
     if (params?.status) q.set('status', params.status)
     if (params?.state) q.set('state', params.state)
     const qs = q.toString()
-    return client.get<Lodge[]>(`/lodges${qs ? `?${qs}` : ''}`)
+    const res = await client.get<Record<string, unknown>>(`/lodges?${qs}`)
+    if (Array.isArray(res)) return res as Lodge[]
+    const obj = res as Record<string, unknown>
+    return (obj.lodges ?? obj.data ?? []) as Lodge[]
   },
 
   create: (data: { name: string; photo: string; address: string; state: string; capacity: number; status: string; coordinator: string; phone: string; map: string }) =>
@@ -408,16 +483,46 @@ export const lodgesApi = {
 // ──────────────────────────── WEB CONTENT ────────────────────────────
 
 export const webContentApi = {
-  get: () =>
-    client.get<WebContent>('/webcontent'),
+  get: async () => {
+    const res = await client.get<Record<string, unknown>>('/webcontent')
+    const obj = res as Record<string, unknown>
+    return (obj.webContent ?? obj) as unknown as WebContent
+  },
 
-  update: (data: { headline?: string; sections?: { label: string; visible: boolean }[] }) =>
+  create: (data: {
+    headline?: string
+    subtitle?: string
+    heroBackground?: string
+    sections?: { label: string; visible: boolean }[]
+    stats?: { label: string; value: string; prefix?: string; suffix?: string }[]
+    pillars?: { title: string; description: string }[]
+    stateChapters?: { name: string; members: string }[]
+    ctaTitle?: string
+    ctaSubtitle?: string
+  }) =>
+    client.post<WebContent>('/webcontent', data),
+
+  update: (data: {
+    headline?: string
+    subtitle?: string
+    heroBackground?: string
+    sections?: { label: string; visible: boolean }[]
+    stats?: { label: string; value: string; prefix?: string; suffix?: string }[]
+    pillars?: { title: string; description: string }[]
+    stateChapters?: { name: string; members: string }[]
+    ctaTitle?: string
+    ctaSubtitle?: string
+  }) =>
     client.put<WebContent>('/webcontent', data),
 }
 
 // ──────────────────────────── PROGRAMS ────────────────────────────
 
 export const programsApi = {
-  getAll: () =>
-    client.get<ProgramItem[]>('/programs'),
+  getAll: async () => {
+    const res = await client.get<Record<string, unknown>>('/programs')
+    if (Array.isArray(res)) return res as ProgramItem[]
+    const obj = res as Record<string, unknown>
+    return (obj.programs ?? obj.data ?? []) as ProgramItem[]
+  },
 }

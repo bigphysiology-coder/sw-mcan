@@ -25,6 +25,7 @@ const DonatePage = lazy(() => import('@/pages/public/DonatePage'))
 const FaqPage = lazy(() => import('@/pages/public/FaqPage'))
 const PortalPage = lazy(() => import('@/pages/public/PortalPage'))
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
+const SignupPage = lazy(() => import('@/pages/auth/SignupPage'))
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'))
 const AdminMembersPage = lazy(() => import('@/pages/admin/AdminMembersPage'))
@@ -75,6 +76,8 @@ function Layout() {
             <Route element={<PublicRoute />}>
               <Route path="/login" element={<Suspense fallback={fallback}><LoginPage /></Suspense>} />
             </Route>
+            <Route path="/signup" element={<Suspense fallback={fallback}><SignupPage /></Suspense>} />
+            <Route path="/digital-id" element={<ProtectedRoute><Suspense fallback={fallback}><DigitalIdPage /></Suspense></ProtectedRoute>} />
             <Route element={<ProtectedRoute requireAdmin />}>
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<Suspense fallback={fallback}><AdminDashboard /></Suspense>} />

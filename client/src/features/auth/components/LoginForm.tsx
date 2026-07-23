@@ -66,10 +66,6 @@ function LoginForm() {
           'Sign In'
         )}
       </button>
-
-      <p className="mt-4 text-center text-xs text-text-muted">
-        Executive admin access only
-      </p>
     </form>
   )
 }

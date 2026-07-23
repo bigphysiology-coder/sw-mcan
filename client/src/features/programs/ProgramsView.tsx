@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Button } from '@/components/ui/Button';
 import { ProgramCard } from '@/components/ui/ProgramCard';
 import { Reveal } from '@/components/ui/Reveal';
-import { JoinModal } from '@/components/ui/JoinModal';
 import { usePrograms } from '@/features/programs/hooks/usePrograms';
 import type { ProgramItem } from '@/types';
 
@@ -32,8 +31,8 @@ interface ProgramsViewProps {
 }
 
 export function ProgramsView({ about, news, projects, allowJoinModal = !news && !projects && !about }: ProgramsViewProps) {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('All');
-  const [joinOpen, setJoinOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q')?.toLowerCase().trim() || '';
   const { programs, isLoading } = usePrograms(projects ? 'project' : undefined);
@@ -85,17 +84,17 @@ export function ProgramsView({ about, news, projects, allowJoinModal = !news && 
         <div className="resp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
           {list.map((it, i) => (
             <Reveal key={it.title} delay={(i % 3) * 0.09}>
-              <ProgramCard {...it} onClick={allowJoinModal ? () => setJoinOpen(true) : undefined} />
+              <ProgramCard {...it} onClick={allowJoinModal ? () => navigate('/signup') : undefined} />
             </Reveal>
           ))}
         </div>
           {allowJoinModal && (
             <div style={{ marginTop: '48px', display: 'flex', justifyContent: 'center' }}>
-              <Button variant="secondary" size="lg" onClick={() => setJoinOpen(true)}>Register your interest</Button>
+              <Button variant="secondary" size="lg" onClick={() => navigate('/signup')}>Register your interest</Button>
             </div>
           )}
       </section>
-        {allowJoinModal && joinOpen && <JoinModal onClose={() => setJoinOpen(false)} />}
+
     </div>
   );
 }
