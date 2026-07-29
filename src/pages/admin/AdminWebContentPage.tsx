@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useWebContent } from '@/features/webcontent/hooks/useWebContent'
 
 const ALL_SECTIONS = [
@@ -13,12 +13,32 @@ const cardStyle: React.CSSProperties = {
   padding: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
 }
 
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB',
+  borderRadius: '8px', fontSize: '14px', fontFamily: 'inherit',
+  outline: 'none', boxSizing: 'border-box',
+}
+
 export default function AdminWebContentPage() {
   const { content, isLoading, error: queryError, createContent, isCreating, updateContent, isUpdating } = useWebContent()
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [dirty, setDirty] = useState(false)
 
   const displayError = error || (queryError instanceof Error ? queryError.message : null)
+
+  const [headline, setHeadline] = useState('')
+  const [subtitle, setSubtitle] = useState('')
+  const [heroBg, setHeroBg] = useState('')
+
+  useEffect(() => {
+    if (content) {
+      setHeadline(content.headline || '')
+      setSubtitle(content.subtitle || '')
+      setHeroBg(content.heroBackground || '')
+      setDirty(false)
+    }
+  }, [content])
 
   const mergedSections = useMemo(() => {
     if (!content?.sections) return ALL_SECTIONS.map(label => ({ label, visible: true }))
@@ -80,9 +100,21 @@ export default function AdminWebContentPage() {
     )
   }
 
+  async function saveHero() {
+    setError(null); setSuccess(null)
+    try {
+      await updateContent({ ...content, headline, subtitle, heroBackground: heroBg })
+      setDirty(false)
+      setSuccess('Hero content saved')
+      setTimeout(() => setSuccess(null), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save hero content')
+      setTimeout(() => setError(null), 5000)
+    }
+  }
+
   async function toggleSection(index: number) {
-    setError(null)
-    setSuccess(null)
+    setError(null); setSuccess(null)
     const updated = mergedSections.map((s, i) =>
       i === index ? { ...s, visible: !s.visible } : s
     )
@@ -100,7 +132,7 @@ export default function AdminWebContentPage() {
     <div>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: 0 }}>Web content</h1>
-        <p style={{ fontSize: '14px', color: '#1a4731', marginTop: '4px' }}>Toggle visibility of public site sections and pages.</p>
+        <p style={{ fontSize: '14px', color: '#1a4731', marginTop: '4px' }}>Manage hero banner text and toggle section visibility.</p>
       </div>
 
       {success && (
@@ -108,13 +140,63 @@ export default function AdminWebContentPage() {
           {success}
         </div>
       )}
-      {error && (
+      {displayError && (
         <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', color: '#DC2626', fontSize: '14px' }}>
-          {error}
+          {displayError}
         </div>
       )}
 
+      {/* Hero content */}
+      <div style={{ ...cardStyle, marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>Hero Banner</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Headline</label>
+            <input
+              value={headline}
+              onChange={(e) => { setHeadline(e.target.value); setDirty(true) }}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Subtitle</label>
+            <textarea
+              value={subtitle}
+              onChange={(e) => { setSubtitle(e.target.value); setDirty(true) }}
+              rows={3}
+              style={{ ...inputStyle, resize: 'vertical' as const }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Background image URL</label>
+            <input
+              value={heroBg}
+              onChange={(e) => { setHeroBg(e.target.value); setDirty(true) }}
+              style={inputStyle}
+              placeholder="/photos/parade.jpg"
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              onClick={saveHero}
+              disabled={isUpdating || !dirty}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px',
+                background: dirty ? '#1a4731' : '#D1D5DB', color: '#fff', fontSize: '14px',
+                fontWeight: 600, border: 'none', borderRadius: '8px',
+                cursor: isUpdating || !dirty ? 'not-allowed' : 'pointer',
+                opacity: isUpdating ? 0.6 : 1, fontFamily: 'inherit',
+              }}
+            >
+              {isUpdating ? 'Saving…' : 'Save Hero'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Section visibility */}
       <div style={{ ...cardStyle }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>Section Visibility</h2>
         <div style={{ borderTop: '1px solid #E5E7EB' }}>
           {mergedSections.map((s, i) => (
             <div key={s.label} style={{
